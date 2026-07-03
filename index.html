@@ -15,6 +15,7 @@
     --water-deep: #0d6a85;
     --buffer: #d9822b;
     --lot: #2e7d32;
+    --struct: #7b4bc9;
     --warn: #c0392b;
     --muted: #6b7a86;
   }
@@ -105,10 +106,14 @@
   .sw-pool { background: var(--water); }
   .sw-buf { background: transparent; border: 2px dashed var(--buffer); }
   .sw-lot { background: transparent; border: 2px solid var(--lot); }
+  .sw-struct { background: transparent; border: 2px dashed var(--struct); }
   #measureInfo { font-size: 12px; color: var(--ink); font-weight: 600; display: none; }
   #lotInfo { font-size: 12px; font-weight: 600; display: none; line-height: 1.4; }
   #lotInfo.ok { color: var(--lot); }
   #lotInfo.warn { color: var(--warn); }
+  #structInfo { font-size: 12px; font-weight: 600; display: none; line-height: 1.4; }
+  #structInfo.ok { color: #5a3a99; }
+  #structInfo.warn { color: var(--warn); }
   .scenario-list { display: flex; flex-direction: column; gap: 5px; }
   .scenario-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
   .scenario-item .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -125,6 +130,14 @@
   .lot-vertex {
     width: 10px; height: 10px;
     background: var(--lot);
+    border: 2px solid #fff;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    cursor: grab;
+  }
+  .struct-vertex {
+    width: 10px; height: 10px;
+    background: var(--struct);
     border: 2px solid #fff;
     border-radius: 2px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -193,9 +206,11 @@
   </div>
 
   <div class="group">
-    <label for="buf">Clearance buffer (m): <span id="bufVal">1.5</span></label>
-    <input type="range" id="buf" min="0" max="3" value="1.5" step="0.25" oninput="redraw()">
-    <p class="hint">Dashed ring = pool edge + buffer. Many Quebec municipalities require 1.5 m from lot lines and structures; check your local bylaw.</p>
+    <label for="bufLot">Property line setback (m): <span id="bufLotVal">1.5</span></label>
+    <input type="range" id="bufLot" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
+    <label for="bufStruct" style="margin-top:4px">Structure setback (m): <span id="bufStructVal">1.5</span></label>
+    <input type="range" id="bufStruct" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
+    <p class="hint">Two dashed rings around the pool: <span style="color:var(--buffer)">orange</span> = property line setback, <span style="color:var(--struct)">purple</span> = setback from the dwelling and accessory buildings. Many Quebec municipalities require 1.5 m; check your local bylaw.</p>
   </div>
 
   <div class="group">
@@ -206,7 +221,18 @@
     </div>
     <button id="lotFinishBtn" class="mini" style="display:none" onclick="finishLot()">Finish outline</button>
     <div id="lotInfo"></div>
-    <p class="hint">Click each corner of your lot on the map, then Finish. Drag the green corners to adjust. The outline turns red and reports the gap when the buffer ring crosses a boundary or the pool sits outside the lot. Saved per location in this browser.</p>
+    <p class="hint">Click each corner of your lot on the map, then Finish. Drag the green corners to adjust. The outline turns red and reports the gap when the property ring crosses a boundary or the pool sits outside the lot. Saved per location in this browser.</p>
+  </div>
+
+  <div class="group">
+    <label>Structures (dwelling, shed, garage)</label>
+    <div class="row">
+      <button id="structBtn" onclick="toggleStructDraw()">Draw structure</button>
+      <button onclick="clearStructures()">Clear</button>
+    </div>
+    <button id="structFinishBtn" class="mini" style="display:none" onclick="finishStruct()">Finish structure</button>
+    <div id="structInfo"></div>
+    <p class="hint">Outline the house and each accessory building (shed, garage), clicking Finish after each one. Draw as many as you need. Drag corners to adjust. The purple outline turns red and reports the gap when the pool is closer than the structure setback. Saved per location in this browser.</p>
   </div>
 
   <div class="group">
@@ -259,13 +285,17 @@
 <script>
 const FT = 0.3048;
 let center = L.latLng(45.4000, -74.0300); // Vaudreuil-Dorion area; search your address
-let map, poolPoly, bufPoly, handle;
+let map, poolPoly, bufLotPoly, bufStructPoly, handle;
 let measureMode = false, measurePts = [], measureLine = null, measureMarkers = [];
 let gSatLayer = null, gHybLayer = null;
 
 // lot line state
 let lotMode = false, lotPts = [], lotPoly = null;
 let lotVertexMarkers = [], lotDraft = null, lotDraftMarkers = [];
+
+// structures state (dwelling + accessory buildings, multiple polygons)
+let structMode = false, structDraft = null, structDraftMarkers = [], structDraftPts = [];
+let structures = []; // each: { pts: [latlng], poly: L.polygon, markers: [marker] }
 
 map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -373,28 +403,34 @@ function redraw() {
   const wFt = parseFloat(document.getElementById('wFt').value) || 1;
   const lFt = parseFloat(document.getElementById('lFt').value) || 1;
   const rot = parseFloat(document.getElementById('rot').value);
-  const buf = parseFloat(document.getElementById('buf').value);
+  const bufLot = parseFloat(document.getElementById('bufLot').value);
+  const bufStruct = parseFloat(document.getElementById('bufStruct').value);
   document.getElementById('rotVal').textContent = rot;
-  document.getElementById('bufVal').textContent = buf.toFixed(2).replace(/\.?0+$/, '') || '0';
+  document.getElementById('bufLotVal').textContent = fmtBuf(bufLot);
+  document.getElementById('bufStructVal').textContent = fmtBuf(bufStruct);
 
   // semi-axes in meters (length along rotated x-axis, width along y)
   const aM = (lFt * FT) / 2;
   const bM = (wFt * FT) / 2;
 
   const poolPts = shapePoints(center, aM, bM, rot, shape);
-  const bufPts = shapePoints(center, aM + buf, bM + buf, rot, shape);
+  const lotRingPts = shapePoints(center, aM + bufLot, bM + bufLot, rot, shape);
+  const structRingPts = shapePoints(center, aM + bufStruct, bM + bufStruct, rot, shape);
 
   if (!poolPoly) {
-    bufPoly = L.polygon(bufPts, {
-      color: '#d9822b', weight: 2, dashArray: '6 5',
-      fill: true, fillColor: '#d9822b', fillOpacity: 0.06
+    bufLotPoly = L.polygon(lotRingPts, {
+      color: '#d9822b', weight: 2, dashArray: '6 5', fill: false
+    }).addTo(map);
+    bufStructPoly = L.polygon(structRingPts, {
+      color: '#7b4bc9', weight: 2, dashArray: '3 5', fill: false
     }).addTo(map);
     poolPoly = L.polygon(poolPts, {
       color: '#0d6a85', weight: 2,
       fill: true, fillColor: '#1587a8', fillOpacity: 0.55
     }).addTo(map);
   } else {
-    bufPoly.setLatLngs(bufPts);
+    bufLotPoly.setLatLngs(lotRingPts);
+    bufStructPoly.setLatLngs(structRingPts);
     poolPoly.setLatLngs(poolPts);
   }
 
@@ -413,17 +449,21 @@ function redraw() {
   if (shape === 'rect') areaFt2 = wFt * lFt;
   else areaFt2 = Math.PI * (wFt / 2) * (lFt / 2);
   const areaM2 = areaFt2 * FT * FT;
-  const totW = (wFt * FT + 2 * buf), totL = (lFt * FT + 2 * buf);
+  const lotW = (wFt * FT + 2 * bufLot), lotL = (lFt * FT + 2 * bufLot);
+  const structW = (wFt * FT + 2 * bufStruct), structL = (lFt * FT + 2 * bufStruct);
   document.getElementById('readout').innerHTML =
     '<span class="swatch sw-pool"></span><b>Pool:</b> ' + fmt(wFt) + ' x ' + fmt(lFt) + ' ft (' +
     (wFt * FT).toFixed(2) + ' x ' + (lFt * FT).toFixed(2) + ' m)<br>' +
     '<b>Water area:</b> ' + Math.round(areaFt2) + ' ft&sup2; (' + areaM2.toFixed(1) + ' m&sup2;)<br>' +
-    '<span class="swatch sw-buf"></span><b>Footprint + buffer:</b> ' + totW.toFixed(2) + ' x ' + totL.toFixed(2) + ' m';
+    '<span class="swatch sw-buf"></span><b>Property ring:</b> ' + lotW.toFixed(2) + ' x ' + lotL.toFixed(2) + ' m<br>' +
+    '<span class="swatch sw-struct"></span><b>Structure ring:</b> ' + structW.toFixed(2) + ' x ' + structL.toFixed(2) + ' m';
 
   refreshLotDistance();
+  refreshStructDistance();
 }
 
 function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
+function fmtBuf(n) { return n.toFixed(2).replace(/\.?0+$/, '') || '0'; }
 
 function onShapeChange() {
   const shape = document.getElementById('shape').value;
@@ -451,6 +491,7 @@ function setPreset(shape, w, l) {
 }
 
 map.on('dblclick', e => {
+  if (structMode) { finishStruct(); return; }
   if (lotMode) { finishLot(); return; }
   if (measureMode) return;
   center = e.latlng;
@@ -461,6 +502,7 @@ map.on('dblclick', e => {
 function toggleMeasure() {
   measureMode = !measureMode;
   if (measureMode && lotMode) toggleLotDraw();
+  if (measureMode && structMode) toggleStructDraw();
   document.getElementById('measureBtn').classList.toggle('active', measureMode);
   map.getContainer().style.cursor = measureMode ? 'crosshair' : '';
 }
@@ -474,6 +516,7 @@ function clearMeasure() {
   info.textContent = '';
 }
 map.on('click', e => {
+  if (structMode) { addStructVertex(e.latlng); return; }
   if (lotMode) { addLotVertex(e.latlng); return; }
   if (!measureMode) return;
   measurePts.push(e.latlng);
@@ -500,6 +543,7 @@ function toggleLotDraw() {
   map.getContainer().style.cursor = lotMode ? 'crosshair' : '';
   if (turningOn) {
     if (measureMode) toggleMeasure();
+    if (structMode) toggleStructDraw();
     clearLotMap(); // start a fresh outline
   } else if (!lotPoly && lotPts.length) {
     clearLotMap(); // cancelled mid-draw
@@ -599,19 +643,19 @@ function poolLotMinDistance() {
 function refreshLotDistance() {
   const info = document.getElementById('lotInfo');
   if (!lotPoly || lotPts.length < 3 || !poolPoly) { info.style.display = 'none'; return; }
-  const buf = parseFloat(document.getElementById('buf').value);
+  const bufLot = parseFloat(document.getElementById('bufLot').value);
   const d = poolLotMinDistance();
   const lotXY = lotPts.map(ll => llToXY(ll, center));
   const inside = pointInPoly({ x: 0, y: 0 }, lotXY);
   info.style.display = 'block';
-  const encroach = (!inside) || (d !== null && d < buf);
+  const encroach = (!inside) || (d !== null && d < bufLot);
   lotPoly.setStyle({ color: encroach ? '#c0392b' : '#2e7d32', fillColor: encroach ? '#c0392b' : '#2e7d32' });
   info.className = encroach ? 'warn' : 'ok';
   if (!inside) {
     info.textContent = 'Pool center is outside the property outline.';
   } else if (d !== null) {
     info.textContent = 'Nearest lot line: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
-      (d < buf ? 'Buffer crosses the line.' : 'Setback OK.');
+      (d < bufLot ? 'Property ring crosses the line.' : 'Setback OK.');
   }
 }
 
@@ -643,6 +687,162 @@ function restoreLot() {
   }
 }
 
+// ---- structures tool (dwelling + accessory buildings) ----
+function toggleStructDraw() {
+  const turningOn = !structMode;
+  structMode = turningOn;
+  document.getElementById('structBtn').classList.toggle('active', structMode);
+  document.getElementById('structFinishBtn').style.display = structMode ? '' : 'none';
+  map.getContainer().style.cursor = structMode ? 'crosshair' : '';
+  if (turningOn) {
+    if (measureMode) toggleMeasure();
+    if (lotMode) toggleLotDraw();
+  }
+  clearStructDraft(); // never leave a half-drawn outline behind
+}
+
+function clearStructDraft() {
+  structDraftPts = [];
+  if (structDraft) { map.removeLayer(structDraft); structDraft = null; }
+  structDraftMarkers.forEach(m => map.removeLayer(m));
+  structDraftMarkers = [];
+}
+
+function addStructVertex(ll) {
+  if (structDraftPts.length) {
+    const last = structDraftPts[structDraftPts.length - 1];
+    if (last.distanceTo(ll) < 0.5) return; // ignore accidental duplicate clicks
+  }
+  structDraftPts.push(ll);
+  const dot = L.circleMarker(ll, { radius: 4, color: '#fff', weight: 2, fillColor: '#7b4bc9', fillOpacity: 1 }).addTo(map);
+  structDraftMarkers.push(dot);
+  if (structDraft) map.removeLayer(structDraft);
+  if (structDraftPts.length > 1) {
+    structDraft = L.polyline(structDraftPts, { color: '#7b4bc9', weight: 2, dashArray: '4 4' }).addTo(map);
+  }
+}
+
+function finishStruct() {
+  if (structDraftPts.length < 3) { alert('Add at least 3 points to outline a structure, then Finish.'); return; }
+  const pts = structDraftPts.slice();
+  clearStructDraft();
+  addStructure(pts);
+  saveStructures();
+  if (structMode) toggleStructDraw();
+}
+
+function addStructure(pts) {
+  const s = { pts: pts, poly: null, markers: [] };
+  s.poly = L.polygon(pts, { color: '#5a3a99', weight: 2, fill: true, fillColor: '#7b4bc9', fillOpacity: 0.15 }).addTo(map);
+  pts.forEach((ll, i) => {
+    const mk = L.marker(ll, {
+      draggable: true,
+      icon: L.divIcon({ className: '', html: '<div class="struct-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
+    }).addTo(map);
+    mk.on('drag', e => { s.pts[i] = e.target.getLatLng(); s.poly.setLatLngs(s.pts); refreshStructDistance(); });
+    mk.on('dragend', saveStructures);
+    s.markers.push(mk);
+  });
+  structures.push(s);
+  refreshStructDistance();
+}
+
+function removeStructureLayers() {
+  structures.forEach(s => {
+    map.removeLayer(s.poly);
+    s.markers.forEach(m => map.removeLayer(m));
+  });
+  structures = [];
+}
+
+function clearStructures() {
+  const anchor = structuresCentroid() || center;
+  const store = JSON.parse(localStorage.getItem('structs') || '{}');
+  delete store[lotKey(anchor)];
+  localStorage.setItem('structs', JSON.stringify(store));
+  removeStructureLayers();
+  clearStructDraft();
+  document.getElementById('structInfo').style.display = 'none';
+  if (structMode) toggleStructDraw();
+}
+
+function structuresCentroid() {
+  let n = 0, la = 0, lo = 0;
+  structures.forEach(s => s.pts.forEach(p => { la += p.lat; lo += p.lng; n++; }));
+  if (!n) return null;
+  return L.latLng(la / n, lo / n);
+}
+
+function poolStructMinDistance() {
+  if (!poolPoly || !structures.length) return null;
+  const ref = center;
+  const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+  let min = Infinity;
+  for (const s of structures) {
+    if (s.pts.length < 2) continue;
+    const poly = s.pts.map(ll => llToXY(ll, ref));
+    const n = poly.length;
+    for (const p of pool) {
+      for (let i = 0; i < n; i++) min = Math.min(min, distPointSeg(p, poly[i], poly[(i + 1) % n]));
+    }
+    for (const q of poly) {
+      for (let i = 0; i < pool.length; i++) min = Math.min(min, distPointSeg(q, pool[i], pool[(i + 1) % pool.length]));
+    }
+  }
+  return min === Infinity ? null : min;
+}
+
+function poolInAnyStructure() {
+  for (const s of structures) {
+    if (s.pts.length < 3) continue;
+    const poly = s.pts.map(ll => llToXY(ll, center));
+    if (pointInPoly({ x: 0, y: 0 }, poly)) return true;
+  }
+  return false;
+}
+
+function refreshStructDistance() {
+  const info = document.getElementById('structInfo');
+  if (!structures.length || !poolPoly) { info.style.display = 'none'; return; }
+  const bufStruct = parseFloat(document.getElementById('bufStruct').value);
+  const d = poolStructMinDistance();
+  const overlaps = poolInAnyStructure();
+  info.style.display = 'block';
+  const encroach = overlaps || (d !== null && d < bufStruct);
+  structures.forEach(s => s.poly.setStyle({ color: encroach ? '#c0392b' : '#5a3a99', fillColor: encroach ? '#c0392b' : '#7b4bc9' }));
+  info.className = encroach ? 'warn' : 'ok';
+  if (overlaps) {
+    info.textContent = 'Pool overlaps a structure.';
+  } else if (d !== null) {
+    info.textContent = 'Nearest structure: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
+      (d < bufStruct ? 'Closer than the structure setback.' : 'Setback OK.');
+  }
+}
+
+function saveStructures() {
+  const anchor = structuresCentroid();
+  const store = JSON.parse(localStorage.getItem('structs') || '{}');
+  if (!anchor) return;
+  store[lotKey(anchor)] = structures.map(s => s.pts.map(ll => [ll.lat, ll.lng]));
+  localStorage.setItem('structs', JSON.stringify(store));
+}
+
+function restoreStructures() {
+  const store = JSON.parse(localStorage.getItem('structs') || '{}');
+  const keys = Object.keys(store);
+  if (!keys.length) return;
+  let best = null, bestD = Infinity;
+  for (const k of keys) {
+    const parts = k.replace('lot:', '').split(',');
+    const d = L.latLng(parseFloat(parts[0]), parseFloat(parts[1])).distanceTo(center);
+    if (d < bestD) { bestD = d; best = k; }
+  }
+  if (best && bestD < 300) {
+    removeStructureLayers();
+    store[best].forEach(polyPts => addStructure(polyPts.map(p => L.latLng(p[0], p[1]))));
+  }
+}
+
 // ---- saved scenarios ----
 function saveScenario() {
   const nameInput = document.getElementById('scenName');
@@ -655,7 +855,8 @@ function saveScenario() {
     w: document.getElementById('wFt').value,
     l: document.getElementById('lFt').value,
     rot: document.getElementById('rot').value,
-    buf: document.getElementById('buf').value,
+    bufLot: document.getElementById('bufLot').value,
+    bufStruct: document.getElementById('bufStruct').value,
     lat: center.lat,
     lng: center.lng
   });
@@ -672,7 +873,9 @@ function loadScenario(i) {
   document.getElementById('wFt').value = s.w;
   document.getElementById('lFt').value = s.l;
   document.getElementById('rot').value = s.rot;
-  document.getElementById('buf').value = s.buf;
+  // backward compatible with older scenarios that stored a single "buf"
+  document.getElementById('bufLot').value = s.bufLot != null ? s.bufLot : (s.buf != null ? s.buf : 1.5);
+  document.getElementById('bufStruct').value = s.bufStruct != null ? s.bufStruct : (s.buf != null ? s.buf : 1.5);
   center = L.latLng(s.lat, s.lng);
   map.setView(center, map.getZoom() < 18 ? 19 : map.getZoom());
   onShapeChange();
@@ -825,9 +1028,10 @@ function annotateCanvas(canvas) {
   const shape = document.getElementById('shape').value;
   const wFt = document.getElementById('wFt').value;
   const lFt = document.getElementById('lFt').value;
-  const buf = document.getElementById('buf').value;
+  const bufLot = document.getElementById('bufLot').value;
+  const bufStruct = document.getElementById('bufStruct').value;
   const dateStr = new Date().toISOString().slice(0, 10);
-  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', ' + buf + ' m clearance buffer. Vaudreuil-Dorion QC. ' + dateStr + '. Planning aid, not a survey.';
+  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', setbacks ' + bufLot + ' m property / ' + bufStruct + ' m structures. Vaudreuil-Dorion QC. ' + dateStr + '. Planning aid, not a survey.';
   ctx.font = '13px sans-serif';
   const tw = ctx.measureText(cap).width;
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -852,6 +1056,7 @@ async function geocode() {
       center = ll;
       redraw();
       restoreLot();
+      restoreStructures();
     } else {
       alert('Address not found. Try adding the city and province.');
     }
@@ -864,6 +1069,7 @@ onShapeChange();
 renderScenarios();
 restoreTileLayers();
 restoreLot();
+restoreStructures();
 </script>
 </body>
 </html>
