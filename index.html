@@ -251,7 +251,16 @@
       <input type="text" id="gkey" placeholder="Paste Google Maps API key">
       <button onclick="enableGoogle()">Enable</button>
     </div>
-    <p class="hint">Get a free key at console.cloud.google.com (enable "Maps JavaScript API"). Adds Google Satellite and Hybrid to the layer switcher (top right of map). Key is saved in this browser only.</p>
+    <p class="hint">Get a free key at console.cloud.google.com (enable "Maps JavaScript API"). Adds Google Satellite and Hybrid to the layer switcher (top right of map). Sharp, but cannot be captured by the PNG export (browser cross-origin limit). Key is saved in this browser only.</p>
+  </div>
+
+  <div class="group">
+    <label for="mbkey">Mapbox satellite (high-res, exportable)</label>
+    <div class="row">
+      <input type="text" id="mbkey" placeholder="Paste Mapbox access token">
+      <button onclick="enableMapbox()">Enable</button>
+    </div>
+    <p class="hint">Get a free token at mapbox.com (Account, Tokens). Adds a high-resolution Mapbox Satellite layer that, unlike Google, CAN be captured by the PNG export. Use this when Esri looks dated or low-res. Token is saved in this browser only.</p>
   </div>
 
   <div class="group">
@@ -272,7 +281,7 @@
     </div>
     <div id="measureInfo"></div>
     <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
-    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and buffer as a PNG with a scale bar for a permit application (uses Esri imagery, not Google).</p>
+    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and rings as a PNG with a scale bar for a permit application. Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
   </div>
 
   <div id="readout"></div>
@@ -287,7 +296,7 @@ const FT = 0.3048;
 let center = L.latLng(45.4000, -74.0300); // Vaudreuil-Dorion area; search your address
 let map, poolPoly, bufLotPoly, bufStructPoly, handle;
 let measureMode = false, measurePts = [], measureLine = null, measureMarkers = [];
-let gSatLayer = null, gHybLayer = null;
+let gSatLayer = null, gHybLayer = null, mbLayer = null;
 
 // lot line state
 let lotMode = false, lotPts = [], lotPoly = null;
@@ -335,9 +344,31 @@ async function enableGoogle() {
   }
 }
 
-// auto-restore saved key
+function enableMapbox() {
+  const token = document.getElementById('mbkey').value.trim() || localStorage.getItem('mapboxToken');
+  if (!token) { alert('Paste your Mapbox access token first.'); return; }
+  localStorage.setItem('mapboxToken', token);
+  if (!mbLayer) {
+    // @2x tiles served at 512px into 256 slots give a crisp retina render;
+    // Mapbox sends permissive CORS headers, so this layer IS exportable.
+    mbLayer = L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token=' + encodeURIComponent(token), {
+      maxZoom: 22, maxNativeZoom: 20, tileSize: 256, crossOrigin: true,
+      attribution: 'Mapbox Satellite, Maxar'
+    });
+    layerControl.addBaseLayer(mbLayer, 'Mapbox satellite');
+  }
+  if (map.hasLayer(esriLayer)) map.removeLayer(esriLayer);
+  if (gSatLayer && map.hasLayer(gSatLayer)) map.removeLayer(gSatLayer);
+  if (gHybLayer && map.hasLayer(gHybLayer)) map.removeLayer(gHybLayer);
+  mbLayer.addTo(map);
+}
+
+// auto-restore saved keys
 if (localStorage.getItem('gmapsKey')) {
   document.getElementById('gkey').value = localStorage.getItem('gmapsKey');
+}
+if (localStorage.getItem('mapboxToken')) {
+  document.getElementById('mbkey').value = localStorage.getItem('mapboxToken');
 }
 
 // meters offset -> latlng
@@ -958,10 +989,14 @@ function restoreTileLayers() {
 
 // ---- PNG export ----
 async function exportPng() {
-  if ((gSatLayer && map.hasLayer(gSatLayer)) || (gHybLayer && map.hasLayer(gHybLayer))) {
-    alert('PNG export uses a standard tile layer. Switch the base layer away from Google (top right) before exporting.');
-    return;
-  }
+  // Google tiles cannot be drawn to a canvas (cross-origin taint), so if a
+  // Google layer is on screen we swap in the best exportable base (Mapbox if
+  // the user added it, otherwise Esri) just for the capture, then restore it.
+  let googleActive = null;
+  if (gSatLayer && map.hasLayer(gSatLayer)) googleActive = gSatLayer;
+  else if (gHybLayer && map.hasLayer(gHybLayer)) googleActive = gHybLayer;
+  const swapBase = googleActive ? (mbLayer || esriLayer) : null;
+
   try {
     if (!window.leafletImage) {
       await loadScript('https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js');
@@ -970,30 +1005,54 @@ async function exportPng() {
     alert('Could not load the export library (network).');
     return;
   }
+
   const btn = document.getElementById('exportBtn');
   const prev = btn.textContent;
   btn.textContent = 'Rendering...';
   btn.disabled = true;
-  window.leafletImage(map, function (err, canvas) {
-    btn.textContent = prev;
-    btn.disabled = false;
-    if (err) { alert('Export failed: ' + err); return; }
-    try {
-      annotateCanvas(canvas);
-      canvas.toBlob(function (blob) {
-        if (!blob) { alert('Could not encode the image. The imagery tiles may block cross-origin export.'); return; }
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'pool-plan.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      }, 'image/png');
-    } catch (e) {
-      alert('Could not encode the image. The imagery tiles may block cross-origin export; try Esri imagery.');
-    }
-  });
+  const done = () => { btn.textContent = prev; btn.disabled = false; };
+  const restore = () => { if (swapBase) { map.removeLayer(swapBase); googleActive.addTo(map); } };
+
+  const capture = () => {
+    window.leafletImage(map, function (err, canvas) {
+      if (err) { restore(); done(); alert('Export failed: ' + err); return; }
+      try {
+        annotateCanvas(canvas);
+        canvas.toBlob(function (blob) {
+          restore(); done();
+          if (!blob) { alert('Could not encode the image. The imagery tiles may block cross-origin export.'); return; }
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'pool-plan.png';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        }, 'image/png');
+      } catch (e) {
+        restore(); done();
+        alert('Could not encode the image. The imagery tiles blocked cross-origin export. Add a Mapbox token, or switch to Esri, then export.');
+      }
+    });
+  };
+
+  if (swapBase) {
+    map.removeLayer(googleActive);
+    swapBase.addTo(map);
+    swapBase.bringToBack();
+    let fired = false;
+    const go = () => { if (fired) return; fired = true; capture(); };
+    swapBase.once('load', go);
+    setTimeout(go, 3500); // fallback if the 'load' event never fires
+  } else {
+    capture();
+  }
+}
+
+function imagerySource() {
+  if (mbLayer && map.hasLayer(mbLayer)) return 'Mapbox Satellite';
+  if (map.hasLayer(esriLayer)) return 'Esri World Imagery';
+  return 'custom imagery';
 }
 
 function annotateCanvas(canvas) {
@@ -1031,7 +1090,7 @@ function annotateCanvas(canvas) {
   const bufLot = document.getElementById('bufLot').value;
   const bufStruct = document.getElementById('bufStruct').value;
   const dateStr = new Date().toISOString().slice(0, 10);
-  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', setbacks ' + bufLot + ' m property / ' + bufStruct + ' m structures. Vaudreuil-Dorion QC. ' + dateStr + '. Planning aid, not a survey.';
+  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', setbacks ' + bufLot + ' m property / ' + bufStruct + ' m structures. Vaudreuil-Dorion QC. ' + dateStr + '. Imagery: ' + imagerySource() + '. Planning aid, not a survey.';
   ctx.font = '13px sans-serif';
   const tw = ctx.measureText(cap).width;
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
