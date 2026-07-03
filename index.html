@@ -14,6 +14,8 @@
     --water: #1587a8;
     --water-deep: #0d6a85;
     --buffer: #d9822b;
+    --lot: #2e7d32;
+    --warn: #c0392b;
     --muted: #6b7a86;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,11 +78,13 @@
     cursor: pointer;
   }
   button:hover { border-color: var(--water); color: var(--water); }
+  button:disabled { opacity: 0.55; cursor: default; }
   button.primary { background: var(--water); border-color: var(--water); color: #fff; }
   button.primary:hover { background: var(--water-deep); color: #fff; }
   button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
   .presets { display: flex; flex-wrap: wrap; gap: 6px; }
   .presets button { font-size: 11.5px; padding: 5px 8px; font-weight: 500; }
+  .mini { font-size: 11.5px; padding: 5px 8px; font-weight: 500; }
   .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .dim-field { display: flex; flex-direction: column; gap: 3px; }
   .dim-field span { font-size: 10.5px; color: var(--muted); }
@@ -100,7 +104,15 @@
   }
   .sw-pool { background: var(--water); }
   .sw-buf { background: transparent; border: 2px dashed var(--buffer); }
+  .sw-lot { background: transparent; border: 2px solid var(--lot); }
   #measureInfo { font-size: 12px; color: var(--ink); font-weight: 600; display: none; }
+  #lotInfo { font-size: 12px; font-weight: 600; display: none; line-height: 1.4; }
+  #lotInfo.ok { color: var(--lot); }
+  #lotInfo.warn { color: var(--warn); }
+  .scenario-list { display: flex; flex-direction: column; gap: 5px; }
+  .scenario-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .scenario-item .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scenario-item button { padding: 3px 7px; font-size: 11px; }
   .footer-note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
   .handle-icon {
     width: 14px; height: 14px;
@@ -108,6 +120,14 @@
     border: 3px solid var(--water-deep);
     border-radius: 50%;
     box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    cursor: grab;
+  }
+  .lot-vertex {
+    width: 10px; height: 10px;
+    background: var(--lot);
+    border: 2px solid #fff;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     cursor: grab;
   }
   @media (max-width: 700px) {
@@ -179,6 +199,27 @@
   </div>
 
   <div class="group">
+    <label>Property line</label>
+    <div class="row">
+      <button id="lotBtn" onclick="toggleLotDraw()">Draw property line</button>
+      <button onclick="clearLot()">Clear</button>
+    </div>
+    <button id="lotFinishBtn" class="mini" style="display:none" onclick="finishLot()">Finish outline</button>
+    <div id="lotInfo"></div>
+    <p class="hint">Click each corner of your lot on the map, then Finish. Drag the green corners to adjust. The outline turns red and reports the gap when the buffer ring crosses a boundary or the pool sits outside the lot. Saved per location in this browser.</p>
+  </div>
+
+  <div class="group">
+    <label for="scenName">Saved scenarios</label>
+    <div class="row">
+      <input type="text" id="scenName" placeholder="Name (e.g. NE corner)" onkeydown="if(event.key==='Enter')saveScenario()">
+      <button onclick="saveScenario()">Save</button>
+    </div>
+    <div class="scenario-list" id="scenarioList"></div>
+    <p class="hint">Stores the current shape, size, rotation, buffer and position so you can compare pool candidates. Saved in this browser only.</p>
+  </div>
+
+  <div class="group">
     <label for="gkey">Google imagery (optional)</label>
     <div class="row">
       <input type="text" id="gkey" placeholder="Paste Google Maps API key">
@@ -188,12 +229,24 @@
   </div>
 
   <div class="group">
+    <label for="tileUrl">Extra imagery layer</label>
+    <input type="text" id="tileName" placeholder="Layer name">
+    <input type="text" id="tileUrl" placeholder="Tile URL with {z}/{x}/{y}">
+    <div class="row">
+      <button onclick="addTileLayer()">Add layer</button>
+      <button class="mini" onclick="fillQcOrtho()">Quebec ortho</button>
+    </div>
+    <p class="hint">Paste any XYZ or WMTS tile URL to add it to the layer switcher (top right). The Quebec orthophoto template is experimental and may be offline or access-restricted: confirm it loads before relying on it. Esri imagery stays the default.</p>
+  </div>
+
+  <div class="group">
     <div class="row">
       <button id="measureBtn" onclick="toggleMeasure()">Measure distance</button>
       <button onclick="clearMeasure()">Clear</button>
     </div>
     <div id="measureInfo"></div>
-    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall).</p>
+    <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
+    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and buffer as a PNG with a scale bar for a permit application (uses Esri imagery, not Google).</p>
   </div>
 
   <div id="readout"></div>
@@ -208,6 +261,11 @@ const FT = 0.3048;
 let center = L.latLng(45.4000, -74.0300); // Vaudreuil-Dorion area; search your address
 let map, poolPoly, bufPoly, handle;
 let measureMode = false, measurePts = [], measureLine = null, measureMarkers = [];
+let gSatLayer = null, gHybLayer = null;
+
+// lot line state
+let lotMode = false, lotPts = [], lotPoly = null;
+let lotVertexMarkers = [], lotDraft = null, lotDraftMarkers = [];
 
 map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -236,12 +294,12 @@ async function enableGoogle() {
     if (!L.gridLayer.googleMutant) {
       await loadScript('https://unpkg.com/leaflet.gridlayer.googlemutant@0.14.1/dist/Leaflet.GoogleMutant.js');
     }
-    const gSat = L.gridLayer.googleMutant({ type: 'satellite', maxZoom: 21 });
-    const gHyb = L.gridLayer.googleMutant({ type: 'hybrid', maxZoom: 21 });
-    layerControl.addBaseLayer(gSat, 'Google satellite');
-    layerControl.addBaseLayer(gHyb, 'Google hybrid');
+    gSatLayer = L.gridLayer.googleMutant({ type: 'satellite', maxZoom: 21 });
+    gHybLayer = L.gridLayer.googleMutant({ type: 'hybrid', maxZoom: 21 });
+    layerControl.addBaseLayer(gSatLayer, 'Google satellite');
+    layerControl.addBaseLayer(gHybLayer, 'Google hybrid');
     map.removeLayer(esriLayer);
-    gSat.addTo(map);
+    gSatLayer.addTo(map);
   } catch (e) {
     alert('Could not load Google Maps. Check that the key is valid and Maps JavaScript API is enabled.');
   }
@@ -257,6 +315,37 @@ function offset(c, dx, dy) {
   const dLat = dy / 111320;
   const dLng = dx / (111320 * Math.cos(c.lat * Math.PI / 180));
   return [c.lat + dLat, c.lng + dLng];
+}
+
+// latlng -> local planar meters relative to a reference latlng
+function llToXY(ll, ref) {
+  const latRad = ref.lat * Math.PI / 180;
+  return {
+    x: (ll.lng - ref.lng) * 111320 * Math.cos(latRad),
+    y: (ll.lat - ref.lat) * 111320
+  };
+}
+
+function distPointSeg(p, a, b) {
+  const abx = b.x - a.x, aby = b.y - a.y;
+  const apx = p.x - a.x, apy = p.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  let t = len2 ? (apx * abx + apy * aby) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const cx = a.x + t * abx, cy = a.y + t * aby;
+  const dx = p.x - cx, dy = p.y - cy;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function pointInPoly(pt, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    const intersect = ((yi > pt.y) !== (yj > pt.y)) &&
+      (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
 }
 
 function shapePoints(c, aM, bM, rotDeg, shape) {
@@ -330,6 +419,8 @@ function redraw() {
     (wFt * FT).toFixed(2) + ' x ' + (lFt * FT).toFixed(2) + ' m)<br>' +
     '<b>Water area:</b> ' + Math.round(areaFt2) + ' ft&sup2; (' + areaM2.toFixed(1) + ' m&sup2;)<br>' +
     '<span class="swatch sw-buf"></span><b>Footprint + buffer:</b> ' + totW.toFixed(2) + ' x ' + totL.toFixed(2) + ' m';
+
+  refreshLotDistance();
 }
 
 function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
@@ -360,6 +451,7 @@ function setPreset(shape, w, l) {
 }
 
 map.on('dblclick', e => {
+  if (lotMode) { finishLot(); return; }
   if (measureMode) return;
   center = e.latlng;
   redraw();
@@ -368,6 +460,7 @@ map.on('dblclick', e => {
 // ---- measure tool ----
 function toggleMeasure() {
   measureMode = !measureMode;
+  if (measureMode && lotMode) toggleLotDraw();
   document.getElementById('measureBtn').classList.toggle('active', measureMode);
   map.getContainer().style.cursor = measureMode ? 'crosshair' : '';
 }
@@ -381,6 +474,7 @@ function clearMeasure() {
   info.textContent = '';
 }
 map.on('click', e => {
+  if (lotMode) { addLotVertex(e.latlng); return; }
   if (!measureMode) return;
   measurePts.push(e.latlng);
   const mk = L.circleMarker(e.latlng, { radius: 4, color: '#fff', weight: 2, fillColor: '#1c2733', fillOpacity: 1 }).addTo(map);
@@ -397,6 +491,352 @@ map.on('click', e => {
   }
 });
 
+// ---- property line (lot) tool ----
+function toggleLotDraw() {
+  const turningOn = !lotMode;
+  lotMode = turningOn;
+  document.getElementById('lotBtn').classList.toggle('active', lotMode);
+  document.getElementById('lotFinishBtn').style.display = lotMode ? '' : 'none';
+  map.getContainer().style.cursor = lotMode ? 'crosshair' : '';
+  if (turningOn) {
+    if (measureMode) toggleMeasure();
+    clearLotMap(); // start a fresh outline
+  } else if (!lotPoly && lotPts.length) {
+    clearLotMap(); // cancelled mid-draw
+  }
+}
+
+function addLotVertex(ll) {
+  if (lotPts.length) {
+    const last = lotPts[lotPts.length - 1];
+    if (last.distanceTo(ll) < 0.5) return; // ignore accidental duplicate clicks
+  }
+  lotPts.push(ll);
+  const dot = L.circleMarker(ll, { radius: 4, color: '#fff', weight: 2, fillColor: '#2e7d32', fillOpacity: 1 }).addTo(map);
+  lotDraftMarkers.push(dot);
+  if (lotDraft) map.removeLayer(lotDraft);
+  if (lotPts.length > 1) {
+    lotDraft = L.polyline(lotPts, { color: '#2e7d32', weight: 2, dashArray: '4 4' }).addTo(map);
+  }
+}
+
+function finishLot() {
+  if (lotPts.length < 3) { alert('Add at least 3 points to outline the property, then Finish.'); return; }
+  if (lotDraft) { map.removeLayer(lotDraft); lotDraft = null; }
+  lotDraftMarkers.forEach(m => map.removeLayer(m));
+  lotDraftMarkers = [];
+  buildLot();
+  saveLot();
+  if (lotMode) toggleLotDraw();
+}
+
+function buildLot() {
+  if (lotPoly) map.removeLayer(lotPoly);
+  lotPoly = L.polygon(lotPts, { color: '#2e7d32', weight: 2, fill: true, fillColor: '#2e7d32', fillOpacity: 0.05 }).addTo(map);
+  lotVertexMarkers.forEach(m => map.removeLayer(m));
+  lotVertexMarkers = [];
+  lotPts.forEach((ll, i) => {
+    const mk = L.marker(ll, {
+      draggable: true,
+      icon: L.divIcon({ className: '', html: '<div class="lot-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
+    }).addTo(map);
+    mk.on('drag', e => { lotPts[i] = e.target.getLatLng(); lotPoly.setLatLngs(lotPts); refreshLotDistance(); });
+    mk.on('dragend', saveLot);
+    lotVertexMarkers.push(mk);
+  });
+  refreshLotDistance();
+}
+
+function clearLotMap() {
+  lotPts = [];
+  if (lotPoly) { map.removeLayer(lotPoly); lotPoly = null; }
+  lotVertexMarkers.forEach(m => map.removeLayer(m));
+  lotVertexMarkers = [];
+  if (lotDraft) { map.removeLayer(lotDraft); lotDraft = null; }
+  lotDraftMarkers.forEach(m => map.removeLayer(m));
+  lotDraftMarkers = [];
+  const info = document.getElementById('lotInfo');
+  info.style.display = 'none';
+  info.textContent = '';
+}
+
+function clearLot() {
+  const anchor = lotPts.length ? lotCentroid() : center;
+  const lots = JSON.parse(localStorage.getItem('lots') || '{}');
+  delete lots[lotKey(anchor)];
+  localStorage.setItem('lots', JSON.stringify(lots));
+  clearLotMap();
+  if (lotMode) toggleLotDraw();
+}
+
+function lotCentroid() {
+  let la = 0, lo = 0;
+  lotPts.forEach(p => { la += p.lat; lo += p.lng; });
+  return L.latLng(la / lotPts.length, lo / lotPts.length);
+}
+
+function poolLotMinDistance() {
+  if (!poolPoly || lotPts.length < 3) return null;
+  const ref = center;
+  const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+  const lot = lotPts.map(ll => llToXY(ll, ref));
+  let min = Infinity;
+  const nLot = lot.length;
+  for (const p of pool) {
+    for (let i = 0; i < nLot; i++) {
+      min = Math.min(min, distPointSeg(p, lot[i], lot[(i + 1) % nLot]));
+    }
+  }
+  const nPool = pool.length;
+  for (const q of lot) {
+    for (let i = 0; i < nPool; i++) {
+      min = Math.min(min, distPointSeg(q, pool[i], pool[(i + 1) % nPool]));
+    }
+  }
+  return min;
+}
+
+function refreshLotDistance() {
+  const info = document.getElementById('lotInfo');
+  if (!lotPoly || lotPts.length < 3 || !poolPoly) { info.style.display = 'none'; return; }
+  const buf = parseFloat(document.getElementById('buf').value);
+  const d = poolLotMinDistance();
+  const lotXY = lotPts.map(ll => llToXY(ll, center));
+  const inside = pointInPoly({ x: 0, y: 0 }, lotXY);
+  info.style.display = 'block';
+  const encroach = (!inside) || (d !== null && d < buf);
+  lotPoly.setStyle({ color: encroach ? '#c0392b' : '#2e7d32', fillColor: encroach ? '#c0392b' : '#2e7d32' });
+  info.className = encroach ? 'warn' : 'ok';
+  if (!inside) {
+    info.textContent = 'Pool center is outside the property outline.';
+  } else if (d !== null) {
+    info.textContent = 'Nearest lot line: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
+      (d < buf ? 'Buffer crosses the line.' : 'Setback OK.');
+  }
+}
+
+// ---- lot persistence (keyed by rough location) ----
+function lotKey(ll) { return 'lot:' + ll.lat.toFixed(3) + ',' + ll.lng.toFixed(3); }
+
+function saveLot() {
+  if (lotPts.length < 3) return;
+  const lots = JSON.parse(localStorage.getItem('lots') || '{}');
+  lots[lotKey(lotCentroid())] = lotPts.map(ll => [ll.lat, ll.lng]);
+  localStorage.setItem('lots', JSON.stringify(lots));
+}
+
+function restoreLot() {
+  const lots = JSON.parse(localStorage.getItem('lots') || '{}');
+  const keys = Object.keys(lots);
+  if (!keys.length) return;
+  let best = null, bestD = Infinity;
+  for (const k of keys) {
+    const parts = k.replace('lot:', '').split(',');
+    const la = parseFloat(parts[0]), lo = parseFloat(parts[1]);
+    const d = L.latLng(la, lo).distanceTo(center);
+    if (d < bestD) { bestD = d; best = k; }
+  }
+  if (best && bestD < 300) {
+    clearLotMap();
+    lotPts = lots[best].map(p => L.latLng(p[0], p[1]));
+    buildLot();
+  }
+}
+
+// ---- saved scenarios ----
+function saveScenario() {
+  const nameInput = document.getElementById('scenName');
+  let name = nameInput.value.trim();
+  if (!name) name = 'Scenario ' + new Date().toLocaleString();
+  const arr = JSON.parse(localStorage.getItem('scenarios') || '[]');
+  arr.push({
+    name: name,
+    shape: document.getElementById('shape').value,
+    w: document.getElementById('wFt').value,
+    l: document.getElementById('lFt').value,
+    rot: document.getElementById('rot').value,
+    buf: document.getElementById('buf').value,
+    lat: center.lat,
+    lng: center.lng
+  });
+  localStorage.setItem('scenarios', JSON.stringify(arr));
+  nameInput.value = '';
+  renderScenarios();
+}
+
+function loadScenario(i) {
+  const arr = JSON.parse(localStorage.getItem('scenarios') || '[]');
+  const s = arr[i];
+  if (!s) return;
+  document.getElementById('shape').value = s.shape;
+  document.getElementById('wFt').value = s.w;
+  document.getElementById('lFt').value = s.l;
+  document.getElementById('rot').value = s.rot;
+  document.getElementById('buf').value = s.buf;
+  center = L.latLng(s.lat, s.lng);
+  map.setView(center, map.getZoom() < 18 ? 19 : map.getZoom());
+  onShapeChange();
+}
+
+function deleteScenario(i) {
+  const arr = JSON.parse(localStorage.getItem('scenarios') || '[]');
+  arr.splice(i, 1);
+  localStorage.setItem('scenarios', JSON.stringify(arr));
+  renderScenarios();
+}
+
+function renderScenarios() {
+  const list = document.getElementById('scenarioList');
+  const arr = JSON.parse(localStorage.getItem('scenarios') || '[]');
+  list.innerHTML = '';
+  if (!arr.length) {
+    const s = document.createElement('span');
+    s.className = 'hint';
+    s.textContent = 'No saved scenarios yet.';
+    list.appendChild(s);
+    return;
+  }
+  arr.forEach((sc, i) => {
+    const row = document.createElement('div');
+    row.className = 'scenario-item';
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = sc.name + ' (' + sc.w + 'x' + sc.l + ')';
+    nm.title = sc.name;
+    const load = document.createElement('button');
+    load.className = 'mini';
+    load.textContent = 'Load';
+    load.onclick = () => loadScenario(i);
+    const del = document.createElement('button');
+    del.className = 'mini';
+    del.textContent = 'Del';
+    del.onclick = () => deleteScenario(i);
+    row.append(nm, load, del);
+    list.appendChild(row);
+  });
+}
+
+// ---- extra imagery tile layers ----
+function addTileLayerObj(name, url, persist) {
+  const layer = L.tileLayer(url, { maxZoom: 21, attribution: name });
+  layerControl.addBaseLayer(layer, name);
+  if (persist) {
+    const arr = JSON.parse(localStorage.getItem('tileLayers') || '[]');
+    if (!arr.some(t => t.url === url)) {
+      arr.push({ name: name, url: url });
+      localStorage.setItem('tileLayers', JSON.stringify(arr));
+    }
+  }
+  return layer;
+}
+
+function addTileLayer() {
+  const name = document.getElementById('tileName').value.trim() || 'Custom layer';
+  const url = document.getElementById('tileUrl').value.trim();
+  if (!/\{z\}/.test(url) || !/\{x\}/.test(url) || !/\{y\}/.test(url)) {
+    alert('The URL must be a tile template containing {z}, {x} and {y}.');
+    return;
+  }
+  const layer = addTileLayerObj(name, url, true);
+  layer.addTo(map);
+  document.getElementById('tileName').value = '';
+  document.getElementById('tileUrl').value = '';
+}
+
+function fillQcOrtho() {
+  document.getElementById('tileName').value = 'Quebec ortho (experimental)';
+  document.getElementById('tileUrl').value = 'https://geoegl.msp.gouv.qc.ca/carto/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=orthos&STYLE=default&TILEMATRIXSET=EPSG_3857&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png';
+}
+
+function restoreTileLayers() {
+  const arr = JSON.parse(localStorage.getItem('tileLayers') || '[]');
+  arr.forEach(t => addTileLayerObj(t.name, t.url, false));
+}
+
+// ---- PNG export ----
+async function exportPng() {
+  if ((gSatLayer && map.hasLayer(gSatLayer)) || (gHybLayer && map.hasLayer(gHybLayer))) {
+    alert('PNG export uses a standard tile layer. Switch the base layer away from Google (top right) before exporting.');
+    return;
+  }
+  try {
+    if (!window.leafletImage) {
+      await loadScript('https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js');
+    }
+  } catch (e) {
+    alert('Could not load the export library (network).');
+    return;
+  }
+  const btn = document.getElementById('exportBtn');
+  const prev = btn.textContent;
+  btn.textContent = 'Rendering...';
+  btn.disabled = true;
+  window.leafletImage(map, function (err, canvas) {
+    btn.textContent = prev;
+    btn.disabled = false;
+    if (err) { alert('Export failed: ' + err); return; }
+    try {
+      annotateCanvas(canvas);
+      canvas.toBlob(function (blob) {
+        if (!blob) { alert('Could not encode the image. The imagery tiles may block cross-origin export.'); return; }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pool-plan.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }, 'image/png');
+    } catch (e) {
+      alert('Could not encode the image. The imagery tiles may block cross-origin export; try Esri imagery.');
+    }
+  });
+}
+
+function annotateCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const H = canvas.height;
+  // scale bar
+  const c = map.getCenter();
+  const p = map.latLngToContainerPoint(c);
+  const c2 = map.containerPointToLatLng(L.point(p.x + 100, p.y));
+  const mPerPx = c.distanceTo(c2) / 100;
+  const targets = [1, 2, 5, 10, 20, 30, 50, 100];
+  let barM = targets[0], barPx = targets[0] / mPerPx;
+  for (const t of targets) {
+    const px = t / mPerPx;
+    if (px <= 140) { barM = t; barPx = px; }
+  }
+  const x0 = 14, y0 = H - 16;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillRect(x0 - 6, y0 - 22, barPx + 12, 32);
+  ctx.strokeStyle = '#1c2733';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0); ctx.lineTo(x0 + barPx, y0);
+  ctx.moveTo(x0, y0 - 5); ctx.lineTo(x0, y0 + 5);
+  ctx.moveTo(x0 + barPx, y0 - 5); ctx.lineTo(x0 + barPx, y0 + 5);
+  ctx.stroke();
+  ctx.fillStyle = '#1c2733';
+  ctx.font = '12px sans-serif';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(barM + ' m (' + (barM / FT).toFixed(0) + ' ft)', x0, y0 - 8);
+  // caption
+  const shape = document.getElementById('shape').value;
+  const wFt = document.getElementById('wFt').value;
+  const lFt = document.getElementById('lFt').value;
+  const buf = document.getElementById('buf').value;
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', ' + buf + ' m clearance buffer. Vaudreuil-Dorion QC. ' + dateStr + '. Planning aid, not a survey.';
+  ctx.font = '13px sans-serif';
+  const tw = ctx.measureText(cap).width;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillRect(0, 0, tw + 20, 24);
+  ctx.fillStyle = '#1c2733';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(cap, 10, 13);
+}
+
 // ---- geocoding ----
 async function geocode() {
   const q = document.getElementById('addr').value.trim();
@@ -411,6 +851,7 @@ async function geocode() {
       map.setView(ll, 19);
       center = ll;
       redraw();
+      restoreLot();
     } else {
       alert('Address not found. Try adding the city and province.');
     }
@@ -420,6 +861,9 @@ async function geocode() {
 }
 
 onShapeChange();
+renderScenarios();
+restoreTileLayers();
+restoreLot();
 </script>
 </body>
 </html>
