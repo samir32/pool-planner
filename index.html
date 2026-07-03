@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pool Placement Planner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --ink: #1c2733;
+    --paper: #f5f6f4;
+    --panel: #ffffff;
+    --line: #dbe0dd;
+    --water: #1587a8;
+    --water-deep: #0d6a85;
+    --buffer: #d9822b;
+    --muted: #6b7a86;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+  #sidebar {
+    width: 300px;
+    min-width: 300px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 1000;
+  }
+  #map { flex: 1; height: 100%; }
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h1 span { color: var(--water); }
+  .hint { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .group { display: flex; flex-direction: column; gap: 6px; }
+  .group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .row { display: flex; gap: 8px; }
+  input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus, select:focus { outline: 2px solid var(--water); outline-offset: -1px; }
+  button {
+    padding: 7px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--water); color: var(--water); }
+  button.primary { background: var(--water); border-color: var(--water); color: #fff; }
+  button.primary:hover { background: var(--water-deep); color: #fff; }
+  button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font-size: 11.5px; padding: 5px 8px; font-weight: 500; }
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dim-field { display: flex; flex-direction: column; gap: 3px; }
+  .dim-field span { font-size: 10.5px; color: var(--muted); }
+  input[type="range"] { width: 100%; accent-color: var(--water); }
+  #readout {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  #readout b { font-weight: 700; }
+  .swatch {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 5px; vertical-align: baseline;
+  }
+  .sw-pool { background: var(--water); }
+  .sw-buf { background: transparent; border: 2px dashed var(--buffer); }
+  #measureInfo { font-size: 12px; color: var(--ink); font-weight: 600; display: none; }
+  .footer-note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+  .handle-icon {
+    width: 14px; height: 14px;
+    background: #fff;
+    border: 3px solid var(--water-deep);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    cursor: grab;
+  }
+  @media (max-width: 700px) {
+    body { flex-direction: column; }
+    #sidebar {
+      width: 100%; min-width: 0;
+      order: 2;
+      max-height: 45vh;
+      border-right: none;
+      border-top: 1px solid var(--line);
+    }
+    #map { order: 1; min-height: 55vh; }
+  }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h1>Pool Placement <span>Planner</span></h1>
+  <p class="hint">Drag the white handle to move the pool. Double-click the map to jump it there. Scroll to zoom.</p>
+
+  <div class="group">
+    <label for="addr">Find address</label>
+    <div class="row">
+      <input type="text" id="addr" placeholder="123 Rue Example, Vaudreuil-Dorion" onkeydown="if(event.key==='Enter')geocode()">
+      <button class="primary" onclick="geocode()">Go</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <label>Presets</label>
+    <div class="presets">
+      <button onclick="setPreset('oval',10,19)">Oval 10 x 19</button>
+      <button onclick="setPreset('oval',12,23)">Oval 12 x 23</button>
+      <button onclick="setPreset('round',15,15)">Round 15</button>
+      <button onclick="setPreset('round',18,18)">Round 18</button>
+      <button onclick="setPreset('round',21,21)">Round 21</button>
+      <button onclick="setPreset('round',24,24)">Round 24</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <label for="shape">Shape &amp; size (ft)</label>
+    <select id="shape" onchange="onShapeChange()">
+      <option value="oval">Oval</option>
+      <option value="round">Round</option>
+      <option value="rect">Rectangle</option>
+    </select>
+    <div class="dims">
+      <div class="dim-field">
+        <span id="wLabel">Width (ft)</span>
+        <input type="number" id="wFt" value="10" min="1" step="0.5" oninput="redraw()">
+      </div>
+      <div class="dim-field">
+        <span id="lLabel">Length (ft)</span>
+        <input type="number" id="lFt" value="19" min="1" step="0.5" oninput="redraw()">
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <label for="rot">Rotation: <span id="rotVal">0</span>&deg;</label>
+    <input type="range" id="rot" min="0" max="180" value="0" step="1" oninput="redraw()">
+  </div>
+
+  <div class="group">
+    <label for="buf">Clearance buffer (m): <span id="bufVal">1.5</span></label>
+    <input type="range" id="buf" min="0" max="3" value="1.5" step="0.25" oninput="redraw()">
+    <p class="hint">Dashed ring = pool edge + buffer. Many Quebec municipalities require 1.5 m from lot lines and structures; check your local bylaw.</p>
+  </div>
+
+  <div class="group">
+    <label for="gkey">Google imagery (optional)</label>
+    <div class="row">
+      <input type="text" id="gkey" placeholder="Paste Google Maps API key">
+      <button onclick="enableGoogle()">Enable</button>
+    </div>
+    <p class="hint">Get a free key at console.cloud.google.com (enable "Maps JavaScript API"). Adds Google Satellite and Hybrid to the layer switcher (top right of map). Key is saved in this browser only.</p>
+  </div>
+
+  <div class="group">
+    <div class="row">
+      <button id="measureBtn" onclick="toggleMeasure()">Measure distance</button>
+      <button onclick="clearMeasure()">Clear</button>
+    </div>
+    <div id="measureInfo"></div>
+    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall).</p>
+  </div>
+
+  <div id="readout"></div>
+
+  <p class="footer-note">Imagery: Esri World Imagery. Georeferencing is typically accurate to within about a metre at this zoom, but verify scale with the measure tool before trusting tight clearances. This is a planning aid, not a survey.</p>
+</div>
+<div id="map"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const FT = 0.3048;
+let center = L.latLng(45.4000, -74.0300); // Vaudreuil-Dorion area; search your address
+let map, poolPoly, bufPoly, handle;
+let measureMode = false, measurePts = [], measureLine = null, measureMarkers = [];
+
+map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
+const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 21, maxNativeZoom: 19,
+  attribution: 'Esri World Imagery'
+}).addTo(map);
+const baseLayers = { 'Esri satellite': esriLayer };
+const layerControl = L.control.layers(baseLayers, null, { collapsed: false }).addTo(map);
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function enableGoogle() {
+  const key = document.getElementById('gkey').value.trim() || localStorage.getItem('gmapsKey');
+  if (!key) { alert('Paste your Google Maps API key first.'); return; }
+  localStorage.setItem('gmapsKey', key);
+  try {
+    if (!window.google || !window.google.maps) {
+      await loadScript('https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key));
+    }
+    if (!L.gridLayer.googleMutant) {
+      await loadScript('https://unpkg.com/leaflet.gridlayer.googlemutant@0.14.1/dist/Leaflet.GoogleMutant.js');
+    }
+    const gSat = L.gridLayer.googleMutant({ type: 'satellite', maxZoom: 21 });
+    const gHyb = L.gridLayer.googleMutant({ type: 'hybrid', maxZoom: 21 });
+    layerControl.addBaseLayer(gSat, 'Google satellite');
+    layerControl.addBaseLayer(gHyb, 'Google hybrid');
+    map.removeLayer(esriLayer);
+    gSat.addTo(map);
+  } catch (e) {
+    alert('Could not load Google Maps. Check that the key is valid and Maps JavaScript API is enabled.');
+  }
+}
+
+// auto-restore saved key
+if (localStorage.getItem('gmapsKey')) {
+  document.getElementById('gkey').value = localStorage.getItem('gmapsKey');
+}
+
+// meters offset -> latlng
+function offset(c, dx, dy) {
+  const dLat = dy / 111320;
+  const dLng = dx / (111320 * Math.cos(c.lat * Math.PI / 180));
+  return [c.lat + dLat, c.lng + dLng];
+}
+
+function shapePoints(c, aM, bM, rotDeg, shape) {
+  const th = rotDeg * Math.PI / 180;
+  const cos = Math.cos(th), sin = Math.sin(th);
+  const pts = [];
+  if (shape === 'rect') {
+    const corners = [[-aM, -bM], [aM, -bM], [aM, bM], [-aM, bM]];
+    for (const [x, y] of corners) {
+      pts.push(offset(c, x * cos - y * sin, x * sin + y * cos));
+    }
+  } else {
+    const n = 72;
+    for (let i = 0; i < n; i++) {
+      const t = (i / n) * 2 * Math.PI;
+      const x = aM * Math.cos(t), y = bM * Math.sin(t);
+      pts.push(offset(c, x * cos - y * sin, x * sin + y * cos));
+    }
+  }
+  return pts;
+}
+
+function redraw() {
+  const shape = document.getElementById('shape').value;
+  const wFt = parseFloat(document.getElementById('wFt').value) || 1;
+  const lFt = parseFloat(document.getElementById('lFt').value) || 1;
+  const rot = parseFloat(document.getElementById('rot').value);
+  const buf = parseFloat(document.getElementById('buf').value);
+  document.getElementById('rotVal').textContent = rot;
+  document.getElementById('bufVal').textContent = buf.toFixed(2).replace(/\.?0+$/, '') || '0';
+
+  // semi-axes in meters (length along rotated x-axis, width along y)
+  const aM = (lFt * FT) / 2;
+  const bM = (wFt * FT) / 2;
+
+  const poolPts = shapePoints(center, aM, bM, rot, shape);
+  const bufPts = shapePoints(center, aM + buf, bM + buf, rot, shape);
+
+  if (!poolPoly) {
+    bufPoly = L.polygon(bufPts, {
+      color: '#d9822b', weight: 2, dashArray: '6 5',
+      fill: true, fillColor: '#d9822b', fillOpacity: 0.06
+    }).addTo(map);
+    poolPoly = L.polygon(poolPts, {
+      color: '#0d6a85', weight: 2,
+      fill: true, fillColor: '#1587a8', fillOpacity: 0.55
+    }).addTo(map);
+  } else {
+    bufPoly.setLatLngs(bufPts);
+    poolPoly.setLatLngs(poolPts);
+  }
+
+  if (!handle) {
+    handle = L.marker(center, {
+      draggable: true,
+      icon: L.divIcon({ className: '', html: '<div class="handle-icon"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+    }).addTo(map);
+    handle.on('drag', e => { center = e.target.getLatLng(); redraw(); });
+  } else {
+    handle.setLatLng(center);
+  }
+
+  // readout
+  let areaFt2;
+  if (shape === 'rect') areaFt2 = wFt * lFt;
+  else areaFt2 = Math.PI * (wFt / 2) * (lFt / 2);
+  const areaM2 = areaFt2 * FT * FT;
+  const totW = (wFt * FT + 2 * buf), totL = (lFt * FT + 2 * buf);
+  document.getElementById('readout').innerHTML =
+    '<span class="swatch sw-pool"></span><b>Pool:</b> ' + fmt(wFt) + ' x ' + fmt(lFt) + ' ft (' +
+    (wFt * FT).toFixed(2) + ' x ' + (lFt * FT).toFixed(2) + ' m)<br>' +
+    '<b>Water area:</b> ' + Math.round(areaFt2) + ' ft&sup2; (' + areaM2.toFixed(1) + ' m&sup2;)<br>' +
+    '<span class="swatch sw-buf"></span><b>Footprint + buffer:</b> ' + totW.toFixed(2) + ' x ' + totL.toFixed(2) + ' m';
+}
+
+function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
+
+function onShapeChange() {
+  const shape = document.getElementById('shape').value;
+  const wI = document.getElementById('wFt'), lI = document.getElementById('lFt');
+  if (shape === 'round') {
+    lI.value = wI.value;
+    lI.disabled = true;
+    document.getElementById('lLabel').textContent = 'Diameter (ft)';
+    document.getElementById('wLabel').textContent = 'Diameter (ft)';
+    wI.oninput = () => { lI.value = wI.value; redraw(); };
+  } else {
+    lI.disabled = false;
+    document.getElementById('wLabel').textContent = 'Width (ft)';
+    document.getElementById('lLabel').textContent = 'Length (ft)';
+    wI.oninput = redraw;
+  }
+  redraw();
+}
+
+function setPreset(shape, w, l) {
+  document.getElementById('shape').value = shape;
+  document.getElementById('wFt').value = w;
+  document.getElementById('lFt').value = l;
+  onShapeChange();
+}
+
+map.on('dblclick', e => {
+  if (measureMode) return;
+  center = e.latlng;
+  redraw();
+});
+
+// ---- measure tool ----
+function toggleMeasure() {
+  measureMode = !measureMode;
+  document.getElementById('measureBtn').classList.toggle('active', measureMode);
+  map.getContainer().style.cursor = measureMode ? 'crosshair' : '';
+}
+function clearMeasure() {
+  measurePts = [];
+  if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+  measureMarkers.forEach(m => map.removeLayer(m));
+  measureMarkers = [];
+  const info = document.getElementById('measureInfo');
+  info.style.display = 'none';
+  info.textContent = '';
+}
+map.on('click', e => {
+  if (!measureMode) return;
+  measurePts.push(e.latlng);
+  const mk = L.circleMarker(e.latlng, { radius: 4, color: '#fff', weight: 2, fillColor: '#1c2733', fillOpacity: 1 }).addTo(map);
+  measureMarkers.push(mk);
+  if (measureLine) map.removeLayer(measureLine);
+  if (measurePts.length > 1) {
+    measureLine = L.polyline(measurePts, { color: '#ffe45c', weight: 3, dashArray: '2 6' }).addTo(map);
+    let total = 0;
+    for (let i = 1; i < measurePts.length; i++) total += measurePts[i - 1].distanceTo(measurePts[i]);
+    const last = measurePts[measurePts.length - 2].distanceTo(measurePts[measurePts.length - 1]);
+    const info = document.getElementById('measureInfo');
+    info.style.display = 'block';
+    info.textContent = 'Last segment: ' + last.toFixed(2) + ' m (' + (last / FT).toFixed(1) + ' ft)  |  Total: ' + total.toFixed(2) + ' m (' + (total / FT).toFixed(1) + ' ft)';
+  }
+});
+
+// ---- geocoding ----
+async function geocode() {
+  const q = document.getElementById('addr').value.trim();
+  if (!q) return;
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=' + encodeURIComponent(q), {
+      headers: { 'Accept-Language': 'en' }
+    });
+    const d = await r.json();
+    if (d.length) {
+      const ll = L.latLng(parseFloat(d[0].lat), parseFloat(d[0].lon));
+      map.setView(ll, 19);
+      center = ll;
+      redraw();
+    } else {
+      alert('Address not found. Try adding the city and province.');
+    }
+  } catch (err) {
+    alert('Geocoding failed (network). You can still pan/zoom manually and double-click to place the pool.');
+  }
+}
+
+onShapeChange();
+</script>
+</body>
+</html>
