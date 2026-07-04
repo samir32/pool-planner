@@ -143,6 +143,32 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     cursor: grab;
   }
+  .plan-handle {
+    width: 16px; height: 16px;
+    background: #ff2d78;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    cursor: move;
+  }
+  .leaflet-tooltip.dist-tip {
+    background: #fff; color: var(--lot);
+    border: 1px solid var(--lot); border-radius: 3px;
+    font-weight: 700; font-size: 11px; padding: 1px 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .leaflet-tooltip.dist-tip.struct { color: #5a3a99; border-color: #5a3a99; }
+  .leaflet-tooltip.dist-tip.viol { color: #fff; background: var(--warn); border-color: var(--warn); }
+  .leaflet-tooltip.dist-tip::before { display: none; }
+  #exitClean {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 1200; display: none;
+    background: var(--ink); color: #fff; border-color: var(--ink);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  }
+  body.clean #sidebar { display: none; }
+  body.clean #exitClean { display: block; }
+  input[type="file"] { font-size: 12px; }
   @media (max-width: 700px) {
     body { flex-direction: column; }
     #sidebar {
@@ -210,7 +236,7 @@
     <input type="range" id="bufLot" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
     <label for="bufStruct" style="margin-top:4px">Structure setback (m): <span id="bufStructVal">1.5</span></label>
     <input type="range" id="bufStruct" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
-    <p class="hint">Two dashed rings around the pool: <span style="color:var(--buffer)">orange</span> = property line setback, <span style="color:var(--struct)">purple</span> = setback from the dwelling and accessory buildings. Many Quebec municipalities require 1.5 m; check your local bylaw.</p>
+    <p class="hint">The shortest distance from the pool to the two nearest lot lines, and to each structure, is drawn and labelled on the map. A line turns red when it is under its setback. Many Quebec municipalities require 1.5 m; check your local bylaw.</p>
   </div>
 
   <div class="group">
@@ -221,7 +247,7 @@
     </div>
     <button id="lotFinishBtn" class="mini" style="display:none" onclick="finishLot()">Finish outline</button>
     <div id="lotInfo"></div>
-    <p class="hint">Click each corner of your lot on the map, then Finish. Drag the green corners to adjust. The outline turns red and reports the gap when the property ring crosses a boundary or the pool sits outside the lot. Saved per location in this browser.</p>
+    <p class="hint">Click each corner of your lot on the map, then Finish. Drag the green corners to adjust. The outline turns red and the distance line reports the gap when the pool is under the setback or sits outside the lot. Saved per location in this browser.</p>
   </div>
 
   <div class="group">
@@ -264,6 +290,19 @@
   </div>
 
   <div class="group">
+    <label for="planFile">Site plan overlay</label>
+    <input type="file" id="planFile" accept="image/*" onchange="loadPlanFile(event)">
+    <label for="planScale" style="margin-top:4px">Plan width: <span id="planScaleVal">40</span> m</label>
+    <input type="range" id="planScale" min="3" max="150" value="40" step="0.5" oninput="onPlanControls()">
+    <label for="planRotate" style="margin-top:4px">Plan rotation: <span id="planRotVal">0</span>&deg;</label>
+    <input type="range" id="planRotate" min="0" max="359" value="0" step="1" oninput="onPlanControls()">
+    <label for="planOpacity" style="margin-top:4px">Plan opacity: <span id="planOpacityVal">65</span>%</label>
+    <input type="range" id="planOpacity" min="0" max="100" value="65" step="5" oninput="onPlanControls()">
+    <button onclick="removePlan()">Remove plan</button>
+    <p class="hint">Upload a survey or site plan image, then drag the pink handle to position it and use the sliders to scale it (match a known length, e.g. a 31 m property line), rotate and fade it over the satellite view. The pool draws on top. Saved per location in this browser.</p>
+  </div>
+
+  <div class="group">
     <label for="tileUrl">Extra imagery layer</label>
     <input type="text" id="tileName" placeholder="Layer name">
     <input type="text" id="tileUrl" placeholder="Tile URL with {z}/{x}/{y}">
@@ -280,8 +319,11 @@
       <button onclick="clearMeasure()">Clear</button>
     </div>
     <div id="measureInfo"></div>
-    <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
-    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and rings as a PNG with a scale bar for a permit application. Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
+    <div class="row">
+      <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
+      <button onclick="toggleClean()">Clean view</button>
+    </div>
+    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and distance lines as a PNG with a scale bar for a permit application (the uploaded site plan is not included; use Clean view plus a screenshot for that). Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
   </div>
 
   <div id="readout"></div>
@@ -289,12 +331,13 @@
   <p class="footer-note">Imagery: Esri World Imagery. Georeferencing is typically accurate to within about a metre at this zoom, but verify scale with the measure tool before trusting tight clearances. This is a planning aid, not a survey.</p>
 </div>
 <div id="map"></div>
+<button id="exitClean" onclick="toggleClean()">Show panel</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const FT = 0.3048;
 let center = L.latLng(45.4000, -74.0300); // Vaudreuil-Dorion area; search your address
-let map, poolPoly, bufLotPoly, bufStructPoly, handle;
+let map, poolPoly, handle;
 let measureMode = false, measurePts = [], measureLine = null, measureMarkers = [];
 let gSatLayer = null, gHybLayer = null, mbLayer = null;
 
@@ -306,6 +349,13 @@ let lotVertexMarkers = [], lotDraft = null, lotDraftMarkers = [];
 let structMode = false, structDraft = null, structDraftMarkers = [], structDraftPts = [];
 let structures = []; // each: { pts: [latlng], poly: L.polygon, markers: [marker] }
 
+// setback distance lines (drawn instead of rings)
+let lotDistLayers = [], structDistLayers = [];
+
+// site plan overlay state
+let planImg = null, planCenter = null, planHandle = null, planDataUrl = null;
+let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65;
+
 map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 21, maxNativeZoom: 19,
@@ -313,6 +363,7 @@ const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/servi
 }).addTo(map);
 const baseLayers = { 'Esri satellite': esriLayer };
 const layerControl = L.control.layers(baseLayers, null, { collapsed: false }).addTo(map);
+L.control.scale({ metric: true, imperial: true, position: 'bottomleft', maxWidth: 160 }).addTo(map);
 
 function loadScript(src) {
   return new Promise((res, rej) => {
@@ -409,6 +460,26 @@ function pointInPoly(pt, poly) {
   return inside;
 }
 
+// closest point on segment a-b to point p (all {x,y} meters); returns distance and point
+function closestPtSeg(p, a, b) {
+  const abx = b.x - a.x, aby = b.y - a.y;
+  const apx = p.x - a.x, apy = p.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  let t = len2 ? (apx * abx + apy * aby) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const c = { x: a.x + t * abx, y: a.y + t * aby };
+  const dx = p.x - c.x, dy = p.y - c.y;
+  return { d: Math.sqrt(dx * dx + dy * dy), c: c };
+}
+
+// local planar meters -> latlng (inverse of llToXY)
+function xyToLL(pt, ref) {
+  return L.latLng(
+    ref.lat + pt.y / 111320,
+    ref.lng + pt.x / (111320 * Math.cos(ref.lat * Math.PI / 180))
+  );
+}
+
 function shapePoints(c, aM, bM, rotDeg, shape) {
   const th = rotDeg * Math.PI / 180;
   const cos = Math.cos(th), sin = Math.sin(th);
@@ -445,23 +516,13 @@ function redraw() {
   const bM = (wFt * FT) / 2;
 
   const poolPts = shapePoints(center, aM, bM, rot, shape);
-  const lotRingPts = shapePoints(center, aM + bufLot, bM + bufLot, rot, shape);
-  const structRingPts = shapePoints(center, aM + bufStruct, bM + bufStruct, rot, shape);
 
   if (!poolPoly) {
-    bufLotPoly = L.polygon(lotRingPts, {
-      color: '#d9822b', weight: 2, dashArray: '6 5', fill: false
-    }).addTo(map);
-    bufStructPoly = L.polygon(structRingPts, {
-      color: '#7b4bc9', weight: 2, dashArray: '3 5', fill: false
-    }).addTo(map);
     poolPoly = L.polygon(poolPts, {
       color: '#0d6a85', weight: 2,
       fill: true, fillColor: '#1587a8', fillOpacity: 0.55
     }).addTo(map);
   } else {
-    bufLotPoly.setLatLngs(lotRingPts);
-    bufStructPoly.setLatLngs(structRingPts);
     poolPoly.setLatLngs(poolPts);
   }
 
@@ -480,14 +541,10 @@ function redraw() {
   if (shape === 'rect') areaFt2 = wFt * lFt;
   else areaFt2 = Math.PI * (wFt / 2) * (lFt / 2);
   const areaM2 = areaFt2 * FT * FT;
-  const lotW = (wFt * FT + 2 * bufLot), lotL = (lFt * FT + 2 * bufLot);
-  const structW = (wFt * FT + 2 * bufStruct), structL = (lFt * FT + 2 * bufStruct);
   document.getElementById('readout').innerHTML =
     '<span class="swatch sw-pool"></span><b>Pool:</b> ' + fmt(wFt) + ' x ' + fmt(lFt) + ' ft (' +
     (wFt * FT).toFixed(2) + ' x ' + (lFt * FT).toFixed(2) + ' m)<br>' +
-    '<b>Water area:</b> ' + Math.round(areaFt2) + ' ft&sup2; (' + areaM2.toFixed(1) + ' m&sup2;)<br>' +
-    '<span class="swatch sw-buf"></span><b>Property ring:</b> ' + lotW.toFixed(2) + ' x ' + lotL.toFixed(2) + ' m<br>' +
-    '<span class="swatch sw-struct"></span><b>Structure ring:</b> ' + structW.toFixed(2) + ' x ' + structL.toFixed(2) + ' m';
+    '<b>Water area:</b> ' + Math.round(areaFt2) + ' ft&sup2; (' + areaM2.toFixed(1) + ' m&sup2;)';
 
   refreshLotDistance();
   refreshStructDistance();
@@ -630,6 +687,7 @@ function clearLotMap() {
   if (lotDraft) { map.removeLayer(lotDraft); lotDraft = null; }
   lotDraftMarkers.forEach(m => map.removeLayer(m));
   lotDraftMarkers = [];
+  clearLotDist();
   const info = document.getElementById('lotInfo');
   info.style.display = 'none';
   info.textContent = '';
@@ -671,23 +729,57 @@ function poolLotMinDistance() {
   return min;
 }
 
+function clearLotDist() { lotDistLayers.forEach(l => map.removeLayer(l)); lotDistLayers = []; }
+
 function refreshLotDistance() {
+  clearLotDist();
   const info = document.getElementById('lotInfo');
   if (!lotPoly || lotPts.length < 3 || !poolPoly) { info.style.display = 'none'; return; }
   const bufLot = parseFloat(document.getElementById('bufLot').value);
-  const d = poolLotMinDistance();
-  const lotXY = lotPts.map(ll => llToXY(ll, center));
-  const inside = pointInPoly({ x: 0, y: 0 }, lotXY);
+  const ref = center;
+  const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+  const lot = lotPts.map(ll => llToXY(ll, ref));
+  const nLot = lot.length;
+  // for each lot edge, the shortest connector from any pool vertex
+  const edges = [];
+  for (let i = 0; i < nLot; i++) {
+    const a = lot[i], b = lot[(i + 1) % nLot];
+    let best = { d: Infinity, from: null, to: null };
+    for (const p of pool) {
+      const r = closestPtSeg(p, a, b);
+      if (r.d < best.d) best = { d: r.d, from: p, to: r.c };
+    }
+    edges.push(best);
+  }
+  edges.sort((x, y) => x.d - y.d);
+  const inside = pointInPoly({ x: 0, y: 0 }, lot);
+  const show = edges.slice(0, 2);
+  show.forEach(e => {
+    const viol = (!inside) || e.d < bufLot;
+    drawDistLine(e.from, e.to, e.d, ref, viol, false);
+  });
+  const overallMin = edges.length ? edges[0].d : null;
+  const bad = (!inside) || (overallMin !== null && overallMin < bufLot);
+  lotPoly.setStyle({ color: bad ? '#c0392b' : '#2e7d32', fillColor: bad ? '#c0392b' : '#2e7d32' });
   info.style.display = 'block';
-  const encroach = (!inside) || (d !== null && d < bufLot);
-  lotPoly.setStyle({ color: encroach ? '#c0392b' : '#2e7d32', fillColor: encroach ? '#c0392b' : '#2e7d32' });
-  info.className = encroach ? 'warn' : 'ok';
+  info.className = bad ? 'warn' : 'ok';
   if (!inside) {
     info.textContent = 'Pool center is outside the property outline.';
-  } else if (d !== null) {
-    info.textContent = 'Nearest lot line: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
-      (d < bufLot ? 'Property ring crosses the line.' : 'Setback OK.');
+  } else {
+    const parts = show.map(e => e.d.toFixed(2) + ' m (' + (e.d / FT).toFixed(1) + ' ft)');
+    info.textContent = 'Two nearest lot lines: ' + parts.join(', ') + '. ' +
+      (overallMin < bufLot ? 'Under the ' + fmtBuf(bufLot) + ' m setback.' : 'Setback OK.');
   }
+}
+
+function drawDistLine(fromXY, toXY, dist, ref, viol, isStruct) {
+  const color = viol ? '#c0392b' : (isStruct ? '#5a3a99' : '#2e7d32');
+  const line = L.polyline([xyToLL(fromXY, ref), xyToLL(toXY, ref)], {
+    color: color, weight: 3, opacity: 0.95
+  }).addTo(map);
+  const cls = 'dist-tip' + (isStruct ? ' struct' : '') + (viol ? ' viol' : '');
+  line.bindTooltip(dist.toFixed(2) + ' m', { permanent: true, direction: 'center', className: cls }).openTooltip();
+  (isStruct ? structDistLayers : lotDistLayers).push(line);
 }
 
 // ---- lot persistence (keyed by rough location) ----
@@ -784,6 +876,7 @@ function removeStructureLayers() {
     s.markers.forEach(m => map.removeLayer(m));
   });
   structures = [];
+  clearStructDist();
 }
 
 function clearStructures() {
@@ -832,21 +925,42 @@ function poolInAnyStructure() {
   return false;
 }
 
+function clearStructDist() { structDistLayers.forEach(l => map.removeLayer(l)); structDistLayers = []; }
+
 function refreshStructDistance() {
+  clearStructDist();
   const info = document.getElementById('structInfo');
   if (!structures.length || !poolPoly) { info.style.display = 'none'; return; }
   const bufStruct = parseFloat(document.getElementById('bufStruct').value);
-  const d = poolStructMinDistance();
+  const ref = center;
+  const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
   const overlaps = poolInAnyStructure();
+  let overallMin = Infinity;
+  structures.forEach(s => {
+    if (s.pts.length < 3) return;
+    const poly = s.pts.map(ll => llToXY(ll, ref));
+    const n = poly.length;
+    let best = { d: Infinity, from: null, to: null };
+    for (const p of pool) {
+      for (let i = 0; i < n; i++) {
+        const r = closestPtSeg(p, poly[i], poly[(i + 1) % n]);
+        if (r.d < best.d) best = { d: r.d, from: p, to: r.c };
+      }
+    }
+    if (best.d < overallMin) overallMin = best.d;
+    const viol = overlaps || best.d < bufStruct;
+    s.poly.setStyle({ color: viol ? '#c0392b' : '#5a3a99', fillColor: viol ? '#c0392b' : '#7b4bc9' });
+    if (best.from && best.to && isFinite(best.d)) drawDistLine(best.from, best.to, best.d, ref, viol, true);
+  });
+  const d = overallMin === Infinity ? null : overallMin;
   info.style.display = 'block';
   const encroach = overlaps || (d !== null && d < bufStruct);
-  structures.forEach(s => s.poly.setStyle({ color: encroach ? '#c0392b' : '#5a3a99', fillColor: encroach ? '#c0392b' : '#7b4bc9' }));
   info.className = encroach ? 'warn' : 'ok';
   if (overlaps) {
     info.textContent = 'Pool overlaps a structure.';
   } else if (d !== null) {
     info.textContent = 'Nearest structure: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
-      (d < bufStruct ? 'Closer than the structure setback.' : 'Setback OK.');
+      (d < bufStruct ? 'Under the ' + fmtBuf(bufStruct) + ' m setback.' : 'Setback OK.');
   }
 }
 
@@ -1100,6 +1214,128 @@ function annotateCanvas(canvas) {
   ctx.fillText(cap, 10, 13);
 }
 
+// ---- site plan overlay ----
+function loadPlanFile(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { setPlan(reader.result); savePlan(); };
+  reader.readAsDataURL(file);
+}
+
+function setPlan(dataUrl) {
+  planDataUrl = dataUrl;
+  if (!planCenter) planCenter = map.getCenter();
+  planWidthM = parseFloat(document.getElementById('planScale').value);
+  planRot = parseFloat(document.getElementById('planRotate').value);
+  planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
+  if (!planImg) {
+    // placed in the tile pane so it sits above imagery but below the pool and overlays
+    planImg = L.DomUtil.create('img', 'plan-overlay', map.getPanes().tilePane);
+    planImg.style.position = 'absolute';
+    planImg.style.transformOrigin = '50% 50%';
+    planImg.style.pointerEvents = 'none';
+  }
+  planImg.onload = () => { planAspect = (planImg.naturalWidth || 1) / (planImg.naturalHeight || 1); updatePlan(); };
+  planImg.src = dataUrl;
+  planImg.style.display = '';
+  ensurePlanHandle();
+  updatePlan();
+}
+
+function ensurePlanHandle() {
+  if (!planCenter) return;
+  if (!planHandle) {
+    planHandle = L.marker(planCenter, {
+      draggable: true, zIndexOffset: -50,
+      icon: L.divIcon({ className: '', html: '<div class="plan-handle"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
+    }).addTo(map);
+    planHandle.on('drag', e => { planCenter = e.target.getLatLng(); updatePlan(); });
+    planHandle.on('dragend', savePlan);
+  } else {
+    planHandle.setLatLng(planCenter);
+  }
+}
+
+function onPlanControls() {
+  planWidthM = parseFloat(document.getElementById('planScale').value);
+  planRot = parseFloat(document.getElementById('planRotate').value);
+  planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
+  document.getElementById('planScaleVal').textContent = fmtBuf(planWidthM);
+  document.getElementById('planRotVal').textContent = planRot;
+  document.getElementById('planOpacityVal').textContent = Math.round(planOpacity * 100);
+  updatePlan();
+  savePlan();
+}
+
+function updatePlan() {
+  if (!planImg || !planCenter || !planDataUrl) return;
+  const cPt = map.latLngToLayerPoint(planCenter);
+  const east = map.containerPointToLatLng(map.latLngToContainerPoint(planCenter).add([100, 0]));
+  const mPer100 = planCenter.distanceTo(east) || 1;
+  const pxPerM = 100 / mPer100;
+  const wpx = planWidthM * pxPerM;
+  const hpx = wpx / (planAspect || 1);
+  planImg.style.width = wpx + 'px';
+  planImg.style.height = hpx + 'px';
+  planImg.style.opacity = planOpacity;
+  planImg.style.transform = 'translate3d(' + (cPt.x - wpx / 2) + 'px,' + (cPt.y - hpx / 2) + 'px,0) rotate(' + planRot + 'deg)';
+}
+
+function removePlan() {
+  const store = JSON.parse(localStorage.getItem('plans') || '{}');
+  if (planCenter) delete store[lotKey(planCenter)];
+  localStorage.setItem('plans', JSON.stringify(store));
+  planDataUrl = null;
+  if (planImg) { planImg.remove(); planImg = null; }
+  if (planHandle) { map.removeLayer(planHandle); planHandle = null; }
+  planCenter = null;
+  document.getElementById('planFile').value = '';
+}
+
+function savePlan() {
+  if (!planDataUrl || !planCenter) return;
+  try {
+    const store = JSON.parse(localStorage.getItem('plans') || '{}');
+    // guard the ~5 MB localStorage quota: skip persistence for very large images
+    if (planDataUrl.length < 3500000) {
+      store[lotKey(planCenter)] = { url: planDataUrl, lat: planCenter.lat, lng: planCenter.lng, w: planWidthM, rot: planRot, op: planOpacity };
+      localStorage.setItem('plans', JSON.stringify(store));
+    }
+  } catch (e) { /* quota exceeded: keep the plan in memory for this session only */ }
+}
+
+function restorePlan() {
+  const store = JSON.parse(localStorage.getItem('plans') || '{}');
+  const keys = Object.keys(store);
+  if (!keys.length) return;
+  let best = null, bestD = Infinity;
+  for (const k of keys) {
+    const parts = k.replace('lot:', '').split(',');
+    const d = L.latLng(parseFloat(parts[0]), parseFloat(parts[1])).distanceTo(center);
+    if (d < bestD) { bestD = d; best = k; }
+  }
+  if (best && bestD < 300) {
+    const rec = store[best];
+    planCenter = L.latLng(rec.lat, rec.lng);
+    document.getElementById('planScale').value = rec.w;
+    document.getElementById('planRotate').value = rec.rot;
+    document.getElementById('planOpacity').value = Math.round(rec.op * 100);
+    document.getElementById('planScaleVal').textContent = fmtBuf(rec.w);
+    document.getElementById('planRotVal').textContent = rec.rot;
+    document.getElementById('planOpacityVal').textContent = Math.round(rec.op * 100);
+    setPlan(rec.url);
+  }
+}
+
+map.on('zoomend viewreset moveend', updatePlan);
+
+// ---- clean view (hide the panel for a full-bleed screenshot) ----
+function toggleClean() {
+  document.body.classList.toggle('clean');
+  setTimeout(() => { map.invalidateSize(); updatePlan(); }, 60);
+}
+
 // ---- geocoding ----
 async function geocode() {
   const q = document.getElementById('addr').value.trim();
@@ -1116,6 +1352,7 @@ async function geocode() {
       redraw();
       restoreLot();
       restoreStructures();
+      restorePlan();
     } else {
       alert('Address not found. Try adding the city and province.');
     }
@@ -1129,6 +1366,7 @@ renderScenarios();
 restoreTileLayers();
 restoreLot();
 restoreStructures();
+restorePlan();
 </script>
 </body>
 </html>
