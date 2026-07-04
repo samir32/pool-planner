@@ -158,8 +158,20 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
   }
   .leaflet-tooltip.dist-tip.struct { color: #5a3a99; border-color: #5a3a99; }
+  .leaflet-tooltip.dist-tip.equip { color: var(--ink); border-color: var(--ink); }
   .leaflet-tooltip.dist-tip.viol { color: #fff; background: var(--warn); border-color: var(--warn); }
   .leaflet-tooltip.dist-tip::before { display: none; }
+  .annot-pin {
+    transform: translate(-50%, -120%);
+    font-size: 11px; font-weight: 700; color: #fff;
+    padding: 2px 6px; border-radius: 10px; white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.55); cursor: move;
+  }
+  .annot-pin.eq { background: var(--ink); }
+  .annot-pin.sf { background: var(--warn); }
+  #equipInfo, #coverageInfo { font-size: 12px; font-weight: 600; line-height: 1.4; display: none; }
+  #equipInfo.ok, #coverageInfo.ok { color: var(--lot); }
+  #equipInfo.warn, #coverageInfo.warn { color: var(--warn); }
   #exitClean {
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
     z-index: 1200; display: none;
@@ -262,6 +274,28 @@
   </div>
 
   <div class="group">
+    <label>Equipment (heat pump, pump, filter)</label>
+    <div class="presets">
+      <button class="mini" onclick="addAnnotation('hp')">+ Heat pump</button>
+      <button class="mini" onclick="addAnnotation('pump')">+ Pump</button>
+      <button class="mini" onclick="addAnnotation('filter')">+ Filter</button>
+    </div>
+    <div id="equipInfo"></div>
+    <p class="hint">Drop equipment pins and drag them into place. Each shows its distance to the nearest pool wall and turns red under 1 m (equipment must sit at least 1 m from the pool). Click a pin to remove it. Saved per location.</p>
+  </div>
+
+  <div class="group">
+    <label>Safety barrier / access</label>
+    <div class="presets">
+      <button class="mini" onclick="addAnnotation('ladder')">+ Ladder</button>
+      <button class="mini" onclick="addAnnotation('gate')">+ Gate</button>
+      <button class="mini" onclick="addAnnotation('opening')">+ Opening</button>
+      <button class="mini" onclick="clearAnnotations()">Clear pins</button>
+    </div>
+    <p class="hint">Mark the ladder, gate, or protected deck opening that satisfies the no-fence exemption. Drag to position; click a pin to remove it. Saved per location.</p>
+  </div>
+
+  <div class="group">
     <label for="scenName">Saved scenarios</label>
     <div class="row">
       <input type="text" id="scenName" placeholder="Name (e.g. NE corner)" onkeydown="if(event.key==='Enter')saveScenario()">
@@ -327,6 +361,7 @@
   </div>
 
   <div id="readout"></div>
+  <div id="coverageInfo"></div>
 
   <p class="footer-note">Imagery: Esri World Imagery. Georeferencing is typically accurate to within about a metre at this zoom, but verify scale with the measure tool before trusting tight clearances. This is a planning aid, not a survey.</p>
 </div>
@@ -355,6 +390,20 @@ let lotDistLayers = [], structDistLayers = [];
 // site plan overlay state
 let planImg = null, planCenter = null, planHandle = null, planDataUrl = null;
 let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65;
+
+// equipment + safety annotation pins, and their distance lines
+let annotations = []; // { kind, marker }
+let equipDistLayers = [];
+const ANNOT = {
+  hp:      { label: 'Heat pump', cls: 'eq', measured: true },
+  pump:    { label: 'Pump',      cls: 'eq', measured: true },
+  filter:  { label: 'Filter',    cls: 'eq', measured: true },
+  ladder:  { label: 'Ladder',    cls: 'sf', measured: false },
+  gate:    { label: 'Gate',      cls: 'sf', measured: false },
+  opening: { label: 'Opening',   cls: 'sf', measured: false }
+};
+const EQUIP_MIN_M = 1; // equipment must sit at least 1 m from the pool wall
+const MAX_COVERAGE_PCT = 15; // pool footprint cannot exceed 15% of the lot
 
 map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -480,6 +529,39 @@ function xyToLL(pt, ref) {
   );
 }
 
+function polygonAreaM2(ptsLL) {
+  if (!ptsLL || ptsLL.length < 3) return 0;
+  const ref = ptsLL[0];
+  const xy = ptsLL.map(ll => llToXY(ll, ref));
+  let a = 0;
+  for (let i = 0, j = xy.length - 1; i < xy.length; j = i++) {
+    a += (xy[j].x + xy[i].x) * (xy[j].y - xy[i].y);
+  }
+  return Math.abs(a / 2);
+}
+
+function poolFootprintFt2() {
+  const shape = document.getElementById('shape').value;
+  const wFt = parseFloat(document.getElementById('wFt').value) || 1;
+  const lFt = parseFloat(document.getElementById('lFt').value) || 1;
+  return shape === 'rect' ? wFt * lFt : Math.PI * (wFt / 2) * (lFt / 2);
+}
+
+function updateCoverage() {
+  const el = document.getElementById('coverageInfo');
+  if (!lotPts || lotPts.length < 3) { el.style.display = 'none'; return; }
+  const lotM2 = polygonAreaM2(lotPts);
+  const footM2 = poolFootprintFt2() * FT * FT;
+  const pct = lotM2 ? (footM2 / lotM2 * 100) : 0;
+  const over = pct > MAX_COVERAGE_PCT;
+  el.style.display = 'block';
+  el.className = over ? 'warn' : 'ok';
+  el.innerHTML =
+    '<b>Lot area:</b> ' + lotM2.toFixed(1) + ' m&sup2; (' + Math.round(lotM2 / (FT * FT)) + ' ft&sup2;)<br>' +
+    '<b>Pool footprint:</b> ' + footM2.toFixed(1) + ' m&sup2; = ' + pct.toFixed(1) + '% of lot ' +
+    (over ? '(over ' + MAX_COVERAGE_PCT + '% limit)' : '(max ' + MAX_COVERAGE_PCT + '%)');
+}
+
 function shapePoints(c, aM, bM, rotDeg, shape) {
   const th = rotDeg * Math.PI / 180;
   const cos = Math.cos(th), sin = Math.sin(th);
@@ -548,6 +630,8 @@ function redraw() {
 
   refreshLotDistance();
   refreshStructDistance();
+  refreshEquip();
+  updateCoverage();
 }
 
 function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
@@ -733,6 +817,7 @@ function clearLotDist() { lotDistLayers.forEach(l => map.removeLayer(l)); lotDis
 
 function refreshLotDistance() {
   clearLotDist();
+  updateCoverage();
   const info = document.getElementById('lotInfo');
   if (!lotPoly || lotPts.length < 3 || !poolPoly) { info.style.display = 'none'; return; }
   const bufLot = parseFloat(document.getElementById('bufLot').value);
@@ -1212,6 +1297,172 @@ function annotateCanvas(canvas) {
   ctx.fillStyle = '#1c2733';
   ctx.textBaseline = 'middle';
   ctx.fillText(cap, 10, 13);
+
+  // leaflet-image renders the tile and vector layers but not tooltips or divIcon
+  // markers, so redraw the distance numbers and the pins onto the canvas here.
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  [].concat(lotDistLayers, structDistLayers, equipDistLayers).forEach(line => {
+    if (typeof line.getLatLngs !== 'function') return;
+    const lls = line.getLatLngs();
+    if (lls.length < 2) return;
+    const mid = L.latLng((lls[0].lat + lls[1].lat) / 2, (lls[0].lng + lls[1].lng) / 2);
+    const pt = map.latLngToContainerPoint(mid);
+    const txt = line.getTooltip() ? line.getTooltip().getContent() : '';
+    canvasPill(ctx, pt.x, pt.y, txt, '#fff', line.options.color, line.options.color);
+  });
+  annotations.forEach(rec => {
+    const def = ANNOT[rec.kind];
+    const pt = map.latLngToContainerPoint(rec.marker.getLatLng());
+    const bg = def.cls === 'eq' ? '#1c2733' : '#c0392b';
+    canvasPill(ctx, pt.x, pt.y - 12, def.label, bg, '#fff', bg);
+  });
+  ctx.textAlign = 'left';
+
+  // legend
+  const legend = [
+    ['#2e7d32', 'Setback distance (OK)'],
+    ['#c0392b', 'Under setback / under 1 m'],
+    ['#5a3a99', 'Structure'],
+    ['#1c2733', 'Equipment'],
+    ['#c0392b', 'Safety access (ladder / gate)']
+  ];
+  ctx.font = '12px sans-serif';
+  let lw = 0;
+  legend.forEach(r => { lw = Math.max(lw, ctx.measureText(r[1]).width); });
+  const boxW = lw + 34, boxH = legend.length * 18 + 12, lx = canvas.width - boxW - 10, ly = 34;
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillRect(lx, ly, boxW, boxH);
+  ctx.strokeStyle = '#dbe0dd'; ctx.lineWidth = 1; ctx.strokeRect(lx, ly, boxW, boxH);
+  ctx.textBaseline = 'middle';
+  legend.forEach((r, i) => {
+    const yy = ly + 15 + i * 18;
+    ctx.fillStyle = r[0];
+    ctx.fillRect(lx + 8, yy - 5, 14, 10);
+    ctx.fillStyle = '#1c2733';
+    ctx.fillText(r[1], lx + 28, yy);
+  });
+}
+
+function canvasPill(ctx, x, y, text, bg, fg, border) {
+  if (!text) return;
+  ctx.font = '11px sans-serif';
+  const w = ctx.measureText(text).width + 8, h = 15;
+  ctx.fillStyle = bg;
+  ctx.strokeStyle = border; ctx.lineWidth = 1;
+  ctx.fillRect(x - w / 2, y - h / 2, w, h);
+  ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+  ctx.fillStyle = fg;
+  ctx.fillText(text, x, y);
+}
+
+// ---- equipment + safety annotation pins ----
+function offsetLatLng(c, dx, dy) { const o = offset(c, dx, dy); return L.latLng(o[0], o[1]); }
+
+function addAnnotation(kind, latlng) {
+  const def = ANNOT[kind];
+  if (!def) return;
+  const ll = latlng || offsetLatLng(center, 4 + 2 * annotations.length, -3);
+  const marker = L.marker(ll, {
+    draggable: true,
+    icon: L.divIcon({ className: '', html: '<div class="annot-pin ' + def.cls + '">' + def.label + '</div>', iconSize: [0, 0], iconAnchor: [0, 0] })
+  }).addTo(map);
+  const rec = { kind: kind, marker: marker };
+  marker.on('drag', refreshEquip);
+  marker.on('dragend', saveAnnotations);
+  const btn = document.createElement('button');
+  btn.className = 'mini';
+  btn.textContent = 'Remove ' + def.label;
+  btn.onclick = () => { removeAnnotation(rec); map.closePopup(); };
+  marker.bindPopup(btn);
+  annotations.push(rec);
+  refreshEquip();
+  saveAnnotations();
+}
+
+function removeAnnotation(rec) {
+  map.removeLayer(rec.marker);
+  annotations = annotations.filter(r => r !== rec);
+  refreshEquip();
+  saveAnnotations();
+}
+
+function clearAnnotations() {
+  const store = JSON.parse(localStorage.getItem('annots') || '{}');
+  delete store[lotKey(annotAnchor())];
+  localStorage.setItem('annots', JSON.stringify(store));
+  annotations.forEach(r => map.removeLayer(r.marker));
+  annotations = [];
+  refreshEquip();
+}
+
+function annotAnchor() {
+  if (!annotations.length) return center;
+  let la = 0, lo = 0;
+  annotations.forEach(r => { const l = r.marker.getLatLng(); la += l.lat; lo += l.lng; });
+  return L.latLng(la / annotations.length, lo / annotations.length);
+}
+
+function refreshEquip() {
+  equipDistLayers.forEach(l => map.removeLayer(l));
+  equipDistLayers = [];
+  const info = document.getElementById('equipInfo');
+  if (!poolPoly) { info.style.display = 'none'; return; }
+  const ref = center;
+  const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+  const rows = [];
+  let anyViol = false;
+  annotations.forEach(rec => {
+    if (!ANNOT[rec.kind].measured) return;
+    const pLL = rec.marker.getLatLng();
+    const p = llToXY(pLL, ref);
+    let best = { d: Infinity, c: null };
+    for (let i = 0; i < pool.length; i++) {
+      const r = closestPtSeg(p, pool[i], pool[(i + 1) % pool.length]);
+      if (r.d < best.d) best = { d: r.d, c: r.c };
+    }
+    if (!best.c) return;
+    const viol = best.d < EQUIP_MIN_M;
+    if (viol) anyViol = true;
+    const line = L.polyline([pLL, xyToLL(best.c, ref)], {
+      color: viol ? '#c0392b' : '#1c2733', weight: 2, dashArray: '4 3'
+    }).addTo(map);
+    line.bindTooltip(best.d.toFixed(2) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
+    equipDistLayers.push(line);
+    rows.push(ANNOT[rec.kind].label + ': ' + best.d.toFixed(2) + ' m (' + (best.d / FT).toFixed(1) + ' ft)' + (viol ? ' - under ' + EQUIP_MIN_M + ' m' : ''));
+  });
+  if (rows.length) {
+    info.style.display = 'block';
+    info.className = anyViol ? 'warn' : 'ok';
+    info.innerHTML = rows.join('<br>');
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+function saveAnnotations() {
+  const store = JSON.parse(localStorage.getItem('annots') || '{}');
+  if (!annotations.length) return;
+  store[lotKey(annotAnchor())] = annotations.map(r => {
+    const l = r.marker.getLatLng();
+    return { kind: r.kind, lat: l.lat, lng: l.lng };
+  });
+  localStorage.setItem('annots', JSON.stringify(store));
+}
+
+function restoreAnnotations() {
+  const store = JSON.parse(localStorage.getItem('annots') || '{}');
+  const keys = Object.keys(store);
+  if (!keys.length) return;
+  let best = null, bestD = Infinity;
+  for (const k of keys) {
+    const parts = k.replace('lot:', '').split(',');
+    const d = L.latLng(parseFloat(parts[0]), parseFloat(parts[1])).distanceTo(center);
+    if (d < bestD) { bestD = d; best = k; }
+  }
+  if (best && bestD < 300) {
+    store[best].forEach(a => addAnnotation(a.kind, L.latLng(a.lat, a.lng)));
+  }
 }
 
 // ---- site plan overlay ----
@@ -1353,6 +1604,7 @@ async function geocode() {
       restoreLot();
       restoreStructures();
       restorePlan();
+      restoreAnnotations();
     } else {
       alert('Address not found. Try adding the city and province.');
     }
@@ -1367,6 +1619,7 @@ restoreTileLayers();
 restoreLot();
 restoreStructures();
 restorePlan();
+restoreAnnotations();
 </script>
 </body>
 </html>
