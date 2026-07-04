@@ -406,6 +406,10 @@ const EQUIP_MIN_M = 1; // equipment must sit at least 1 m from the pool wall
 const MAX_COVERAGE_PCT = 15; // pool footprint cannot exceed 15% of the lot
 
 map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
+// dedicated pane for the site plan: above the imagery (200), below the pool and overlays (400)
+map.createPane('planPane');
+map.getPane('planPane').style.zIndex = 250;
+map.getPane('planPane').style.pointerEvents = 'none';
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 21, maxNativeZoom: 19,
   attribution: 'Esri World Imagery'
@@ -1481,8 +1485,8 @@ function setPlan(dataUrl) {
   planRot = parseFloat(document.getElementById('planRotate').value);
   planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
   if (!planImg) {
-    // placed in the tile pane so it sits above imagery but below the pool and overlays
-    planImg = L.DomUtil.create('img', 'plan-overlay', map.getPanes().tilePane);
+    // placed in a dedicated pane so it sits above imagery but below the pool and overlays
+    planImg = L.DomUtil.create('img', 'plan-overlay', map.getPane('planPane'));
     planImg.style.position = 'absolute';
     planImg.style.transformOrigin = '50% 50%';
     planImg.style.pointerEvents = 'none';
