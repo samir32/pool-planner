@@ -49,8 +49,17 @@
     letter-spacing: 0.01em;
   }
   h1 span { color: var(--water); }
-  .hint { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
-  .group { display: flex; flex-direction: column; gap: 6px; }
+  .hint { font-size: 11.5px; color: var(--muted); line-height: 1.45; display: none; }
+  .hint.show { display: block; }
+  .group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .info-btn {
+    position: absolute; top: 0; right: 0; width: 18px; height: 18px; padding: 0;
+    border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--muted);
+    font-size: 12px; font-weight: 700; font-style: italic; font-family: Georgia, "Times New Roman", serif;
+    line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .info-btn:hover { color: var(--water); border-color: var(--water); }
+  .info-btn.on { background: var(--water); color: #fff; border-color: var(--water); }
   .group label {
     font-size: 11px;
     font-weight: 600;
@@ -237,8 +246,10 @@
 </head>
 <body>
 <div id="sidebar">
-  <h1>Pool Placement <span>Planner</span></h1>
-  <p class="hint">Drag the white handle to move the pool. Double-click the map to jump it there. Scroll to zoom.</p>
+  <div class="group">
+    <h1>Pool Placement <span>Planner</span></h1>
+    <p class="hint">Drag the white handle to move the pool. Double-click the map to jump it there. Scroll to zoom.</p>
+  </div>
 
   <div class="group">
     <label for="addr">Find address</label>
@@ -1891,6 +1902,29 @@ function toggleInfoBox() {
   updateInfoBox();
 }
 
+// collapse the long help texts behind a small "i" button on each group
+function toggleHint(btn) {
+  const g = btn.closest('.group');
+  const h = g && g.querySelector('.hint');
+  if (!h) return;
+  const show = !h.classList.contains('show');
+  h.classList.toggle('show', show);
+  btn.classList.toggle('on', show);
+}
+
+function injectHelpButtons() {
+  document.querySelectorAll('#sidebar .group').forEach(g => {
+    if (!g.querySelector('.hint')) return;
+    const b = document.createElement('button');
+    b.className = 'info-btn';
+    b.type = 'button';
+    b.textContent = 'i';
+    b.title = 'Show help';
+    b.onclick = () => toggleHint(b);
+    g.appendChild(b); // absolutely positioned, so DOM order does not matter
+  });
+}
+
 function toggleLang() {
   lang = lang === 'en' ? 'fr' : 'en';
   document.getElementById('langBtn').textContent = lang === 'en' ? 'FR' : 'EN';
@@ -2061,6 +2095,7 @@ async function geocode() {
   }
 }
 
+injectHelpButtons();
 restoreSession();
 onShapeChange();
 renderScenarios();
