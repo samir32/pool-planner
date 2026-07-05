@@ -18,6 +18,7 @@
     --struct: #7b4bc9;
     --warn: #c0392b;
     --muted: #6b7a86;
+    --label-size: 11px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -154,8 +155,9 @@
   .leaflet-tooltip.dist-tip {
     background: #fff; color: var(--lot);
     border: 1px solid var(--lot); border-radius: 3px;
-    font-weight: 700; font-size: 11px; padding: 1px 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    font-weight: 700; font-size: var(--label-size); line-height: 1.25;
+    padding: 0 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin: 0;
   }
   .leaflet-tooltip.dist-tip.struct { color: #5a3a99; border-color: #5a3a99; }
   .leaflet-tooltip.dist-tip.equip { color: var(--ink); border-color: var(--ink); }
@@ -171,7 +173,7 @@
   }
   .annot-pin .txt {
     background: rgba(255,255,255,0.92); color: var(--ink);
-    font-size: 11px; font-weight: 700; padding: 0 4px; border-radius: 3px;
+    font-size: var(--label-size); font-weight: 700; padding: 0 3px; border-radius: 3px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
   }
   .annot-pin.eq .sym { background: var(--ink); }
@@ -276,6 +278,8 @@
   <div class="group">
     <label for="lineW">Line width: <span id="lineWVal">3</span> px</label>
     <input type="range" id="lineW" min="1" max="8" value="3" step="1" oninput="onLineWidth()">
+    <label for="labelSz" style="margin-top:4px">Label size: <span id="labelSzVal">11</span> px</label>
+    <input type="range" id="labelSz" min="8" max="18" value="11" step="1" oninput="onLabelSize()">
   </div>
 
   <div class="group">
@@ -309,7 +313,7 @@
       <button class="mini" onclick="addAnnotation('filter')">+ Filter</button>
     </div>
     <div id="equipInfo"></div>
-    <p class="hint">Use "Equipment set" for a single pin covering the pump, heat pump and filter together, or drop them individually. Drag into place. Each shows its distance to the nearest pool wall and turns red under 1 m (equipment must sit at least 1 m from the pool). Click a pin to remove it. Saved per location.</p>
+    <p class="hint">Use "Equipment set" for a single pin covering the pump, heat pump and filter together, or drop them individually. Drag into place. Each shows its distance to the nearest pool wall (min 1 m, the anti-climb rule) and, once a property line is drawn, to the nearest lot line (the property setback), turning red under either limit. Click a pin to remove it. Saved per location.</p>
   </div>
 
   <div class="group">
@@ -420,6 +424,7 @@ let lotDistLayers = [], structDistLayers = [];
 
 // setback distance lines (drawn instead of rings)
 let lineWeight = 3;        // user-controllable line width
+let labelSize = 11;        // user-controllable distance-label font size (px)
 let lotNearest = [];       // the two nearest lot connectors, for editable nudging
 
 // site plan overlay state
@@ -732,6 +737,13 @@ function onLineWidth() {
   lineWeight = parseInt(document.getElementById('lineW').value, 10) || 3;
   document.getElementById('lineWVal').textContent = lineWeight;
   redraw();
+  saveSession();
+}
+
+function onLabelSize() {
+  labelSize = parseInt(document.getElementById('labelSz').value, 10) || 11;
+  document.getElementById('labelSzVal').textContent = labelSize;
+  document.documentElement.style.setProperty('--label-size', labelSize + 'px');
   saveSession();
 }
 
@@ -1419,13 +1431,14 @@ function annotateCanvas(canvas) {
     ctx.fillRect(pt.x - 5, pt.y - 5, 10, 10);
     ctx.strokeRect(pt.x - 5, pt.y - 5, 10, 10);
     // readable label to the right: dark text on white
-    ctx.font = '11px sans-serif';
+    ctx.font = labelSize + 'px sans-serif';
     ctx.textAlign = 'left';
+    const lh = labelSize + 4;
     const lw = ctx.measureText(def.label).width + 6;
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.fillRect(pt.x + 8, pt.y - 7, lw, 14);
+    ctx.fillRect(pt.x + 8, pt.y - lh / 2, lw, lh);
     ctx.strokeStyle = '#c9c9c9';
-    ctx.strokeRect(pt.x + 8, pt.y - 7, lw, 14);
+    ctx.strokeRect(pt.x + 8, pt.y - lh / 2, lw, lh);
     ctx.fillStyle = '#1c2733';
     ctx.fillText(def.label, pt.x + 11, pt.y);
   });
@@ -1458,8 +1471,8 @@ function annotateCanvas(canvas) {
 
 function canvasPill(ctx, x, y, text, bg, fg, border) {
   if (!text) return;
-  ctx.font = '11px sans-serif';
-  const w = ctx.measureText(text).width + 8, h = 15;
+  ctx.font = labelSize + 'px sans-serif';
+  const w = ctx.measureText(text).width + 6, h = labelSize + 4;
   ctx.fillStyle = bg;
   ctx.strokeStyle = border; ctx.lineWidth = 1;
   ctx.fillRect(x - w / 2, y - h / 2, w, h);
@@ -1515,6 +1528,24 @@ function annotAnchor() {
   return L.latLng(la / annotations.length, lo / annotations.length);
 }
 
+// nearest point on a polygon (array of {x,y}) to point p
+function nearestOnPoly(p, poly) {
+  let best = { d: Infinity, c: null };
+  for (let i = 0; i < poly.length; i++) {
+    const r = closestPtSeg(p, poly[i], poly[(i + 1) % poly.length]);
+    if (r.d < best.d) best = { d: r.d, c: r.c };
+  }
+  return best;
+}
+
+function equipLine(pLL, cXY, ref, dist, color, viol) {
+  const line = L.polyline([pLL, xyToLL(cXY, ref)], {
+    color: color, weight: Math.max(1, lineWeight - 1), dashArray: '4 3'
+  }).addTo(map);
+  line.bindTooltip(fmtM(dist) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
+  equipDistLayers.push(line);
+}
+
 function refreshEquip() {
   equipDistLayers.forEach(l => map.removeLayer(l));
   equipDistLayers = [];
@@ -1522,26 +1553,33 @@ function refreshEquip() {
   if (!poolPoly) { info.style.display = 'none'; return; }
   const ref = center;
   const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+  const hasLot = lotPts && lotPts.length >= 3;
+  const lot = hasLot ? lotPts.map(ll => llToXY(ll, ref)) : null;
+  const bufLot = parseFloat(document.getElementById('bufLot').value);
   const rows = [];
   let anyViol = false;
   annotations.forEach(rec => {
     if (!ANNOT[rec.kind].measured) return;
     const pLL = rec.marker.getLatLng();
     const p = llToXY(pLL, ref);
-    let best = { d: Infinity, c: null };
-    for (let i = 0; i < pool.length; i++) {
-      const r = closestPtSeg(p, pool[i], pool[(i + 1) % pool.length]);
-      if (r.d < best.d) best = { d: r.d, c: r.c };
+    // distance to the nearest pool wall (equipment must be at least 1 m from the pool)
+    const bp = nearestOnPoly(p, pool);
+    if (!bp.c) return;
+    const poolViol = bp.d < EQUIP_MIN_M;
+    if (poolViol) anyViol = true;
+    equipLine(pLL, bp.c, ref, bp.d, poolViol ? '#c0392b' : '#1c2733', poolViol);
+    let row = ANNOT[rec.kind].label + ': pool ' + fmtM(bp.d) + ' m' + (poolViol ? ' (under ' + EQUIP_MIN_M + ' m)' : '');
+    // distance to the nearest property line (equipment must also meet the property setback)
+    if (lot) {
+      const bl = nearestOnPoly(p, lot);
+      if (bl.c) {
+        const lotViol = bl.d < bufLot;
+        if (lotViol) anyViol = true;
+        equipLine(pLL, bl.c, ref, bl.d, lotViol ? '#c0392b' : '#2e7d32', lotViol);
+        row += ', lot line ' + fmtM(bl.d) + ' m' + (lotViol ? ' (under ' + fmtBuf(bufLot) + ' m)' : '');
+      }
     }
-    if (!best.c) return;
-    const viol = best.d < EQUIP_MIN_M;
-    if (viol) anyViol = true;
-    const line = L.polyline([pLL, xyToLL(best.c, ref)], {
-      color: viol ? '#c0392b' : '#1c2733', weight: Math.max(1, lineWeight - 1), dashArray: '4 3'
-    }).addTo(map);
-    line.bindTooltip(fmtM(best.d) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
-    equipDistLayers.push(line);
-    rows.push(ANNOT[rec.kind].label + ': ' + fmtM(best.d) + ' m (' + (best.d / FT).toFixed(1) + ' ft)' + (viol ? ' - under ' + EQUIP_MIN_M + ' m' : ''));
+    rows.push(row);
   });
   if (rows.length) {
     info.style.display = 'block';
@@ -1754,15 +1792,21 @@ function updateInfoBox() {
   if (eq.length && poolPoly) {
     const ref = center;
     const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+    const lot = (lotPts && lotPts.length >= 3) ? lotPts.map(ll => llToXY(ll, ref)) : null;
     let anyV = false;
     const parts = eq.map(rec => {
       const p = llToXY(rec.marker.getLatLng(), ref);
-      let md = Infinity;
-      for (let i = 0; i < pool.length; i++) { const r = closestPtSeg(p, pool[i], pool[(i + 1) % pool.length]); if (r.d < md) md = r.d; }
-      if (md < EQUIP_MIN_M) anyV = true;
-      return ANNOT[rec.kind].label + ' ' + fmtM(md) + ' m';
+      const pd = nearestOnPoly(p, pool).d;
+      if (pd < EQUIP_MIN_M) anyV = true;
+      let s = ANNOT[rec.kind].label + ' ' + fmtM(pd) + ' m pool';
+      if (lot) {
+        const ld = nearestOnPoly(p, lot).d;
+        if (ld < bufLot) anyV = true;
+        s += ' / ' + fmtM(ld) + ' m lot';
+      }
+      return s;
     });
-    html += '<b>Equipment (min ' + EQUIP_MIN_M + ' m):</b> <span class="' + (anyV ? 'warn' : '') + '">' + parts.join(', ') + '</span><br>';
+    html += '<b>Equipment (pool ' + EQUIP_MIN_M + ' m' + (lot ? ', lot ' + fmtBuf(bufLot) + ' m' : '') + '):</b> <span class="' + (anyV ? 'warn' : '') + '">' + parts.join('; ') + '</span><br>';
   }
   const sf = annotations.filter(r => ANNOT[r.kind].cls === 'sf');
   if (sf.length) html += '<b>Safety access:</b> ' + sf.map(r => ANNOT[r.kind].label).join(', ');
@@ -1784,6 +1828,7 @@ function saveSessionNow() {
       bufLot: document.getElementById('bufLot').value,
       bufStruct: document.getElementById('bufStruct').value,
       lineW: lineWeight,
+      labelSz: labelSize,
       whiteBack: Math.round(planWhiteBack * 100)
     }));
   } catch (e) { /* ignore quota */ }
@@ -1804,6 +1849,12 @@ function restoreSession() {
     lineWeight = parseInt(s.lineW, 10) || 3;
     document.getElementById('lineW').value = lineWeight;
     document.getElementById('lineWVal').textContent = lineWeight;
+  }
+  if (s.labelSz != null) {
+    labelSize = parseInt(s.labelSz, 10) || 11;
+    document.getElementById('labelSz').value = labelSize;
+    document.getElementById('labelSzVal').textContent = labelSize;
+    document.documentElement.style.setProperty('--label-size', labelSize + 'px');
   }
   if (s.whiteBack != null) {
     document.getElementById('planWhite').value = s.whiteBack;
