@@ -414,7 +414,7 @@
       <button onclick="toggleInfoBox()">Info box</button>
       <button id="langBtn" onclick="toggleLang()">FR</button>
     </div>
-    <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and distance lines as a PNG with a scale bar for a permit application (the uploaded site plan is not included; use Clean view plus a screenshot for that). Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
+    <p class="hint">In measure mode, click points on the map to measure a distance. Clicks magnet-snap to the nearest pool, lot or structure edge or equipment pin (the point turns orange when it snaps), so you can measure corner to corner exactly. Export saves the current map, pool and distance lines as a PNG with a scale bar for a permit application (the uploaded site plan is not included; use Clean view plus a screenshot for that). Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
   </div>
 
   <div id="readout"></div>
@@ -830,12 +830,40 @@ function clearMeasure() {
   info.style.display = 'none';
   info.textContent = '';
 }
+// magnet: snap a clicked point to the nearest pool/lot/structure edge or
+// equipment point, if within a small screen distance
+function snapPoint(latlng) {
+  const THRESH = 14; // pixels
+  const ref = latlng;
+  const clickPx = map.latLngToContainerPoint(latlng);
+  let best = null, bestPx = THRESH;
+  const consider = (candLL) => {
+    const px = clickPx.distanceTo(map.latLngToContainerPoint(candLL));
+    if (px < bestPx) { bestPx = px; best = candLL; }
+  };
+  const rings = [];
+  if (poolPoly) rings.push(poolPoly.getLatLngs()[0]);
+  if (lotPts && lotPts.length >= 3) rings.push(lotPts);
+  structures.forEach(s => { if (s.pts.length >= 3) rings.push(s.pts); });
+  rings.forEach(ring => {
+    const xy = ring.map(ll => llToXY(ll, ref));
+    for (let i = 0; i < xy.length; i++) {
+      const r = closestPtSeg({ x: 0, y: 0 }, xy[i], xy[(i + 1) % xy.length]);
+      consider(xyToLL(r.c, ref));
+    }
+  });
+  annotations.forEach(rc => consider(rc.marker.getLatLng()));
+  return best || latlng;
+}
+
 map.on('click', e => {
   if (structMode) { addStructVertex(e.latlng); return; }
   if (lotMode) { addLotVertex(e.latlng); return; }
   if (!measureMode) return;
-  measurePts.push(e.latlng);
-  const mk = L.circleMarker(e.latlng, { radius: 4, color: '#fff', weight: 2, fillColor: '#1c2733', fillOpacity: 1 }).addTo(map);
+  const snapped = snapPoint(e.latlng);
+  const snap = !snapped.equals(e.latlng);
+  measurePts.push(snapped);
+  const mk = L.circleMarker(snapped, { radius: snap ? 5 : 4, color: '#fff', weight: 2, fillColor: snap ? '#e8590c' : '#1c2733', fillOpacity: 1 }).addTo(map);
   measureMarkers.push(mk);
   if (measureLine) map.removeLayer(measureLine);
   if (measurePts.length > 1) {
