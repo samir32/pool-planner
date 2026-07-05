@@ -155,9 +155,9 @@
   .leaflet-tooltip.dist-tip {
     background: #fff; color: var(--lot);
     border: 1px solid var(--lot); border-radius: 3px;
-    font-weight: 700; font-size: var(--label-size); line-height: 1.25;
-    padding: 0 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    margin: 0;
+    font-weight: 700; font-size: var(--label-size); line-height: 1.3;
+    padding: 1px 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin: 0; white-space: nowrap; width: auto;
   }
   .leaflet-tooltip.dist-tip.struct { color: #5a3a99; border-color: #5a3a99; }
   .leaflet-tooltip.dist-tip.equip { color: var(--ink); border-color: var(--ink); }
@@ -208,6 +208,8 @@
   /* keep a thin always-hoverable strip at the very top so the hidden button is reachable */
   body.clean #exitClean::before { content: ""; position: absolute; top: -10px; left: -40px; right: -40px; height: 30px; }
   body.clean .leaflet-control-layers { display: none; }
+  /* in clean view hide the editing handles (pool, lot/structure vertices, plan) - keep the lines */
+  body.clean .edit-handle { display: none !important; }
   .dist-label-eq {
     transform: translate(-50%, -50%);
     background: #fff; color: var(--ink); border: 1px solid var(--ink);
@@ -293,6 +295,10 @@
     <input type="range" id="lineW" min="1" max="8" value="3" step="1" oninput="onLineWidth()">
     <label for="labelSz" style="margin-top:4px">Label size: <span id="labelSzVal">11</span> px</label>
     <input type="range" id="labelSz" min="8" max="18" value="11" step="1" oninput="onLabelSize()">
+    <label for="lotOp" style="margin-top:4px">Property line opacity: <span id="lotOpVal">100</span>%</label>
+    <input type="range" id="lotOp" min="0" max="100" value="100" step="5" oninput="onLineOpacity()">
+    <label for="structOp" style="margin-top:4px">Building line opacity: <span id="structOpVal">100</span>%</label>
+    <input type="range" id="structOp" min="0" max="100" value="100" step="5" oninput="onLineOpacity()">
   </div>
 
   <div class="group">
@@ -439,6 +445,8 @@ let lotDistLayers = [], structDistLayers = [];
 // setback distance lines (drawn instead of rings)
 let lineWeight = 3;        // user-controllable line width
 let labelSize = 11;        // user-controllable distance-label font size (px)
+let lotLineOpacity = 1;    // property line stroke opacity
+let structLineOpacity = 1; // building line stroke opacity
 let lotNearest = [];       // the two nearest lot connectors, for editable nudging
 
 // site plan overlay state
@@ -716,7 +724,7 @@ function redraw() {
   if (!handle) {
     handle = L.marker(center, {
       draggable: true,
-      icon: L.divIcon({ className: '', html: '<div class="handle-icon"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+      icon: L.divIcon({ className: 'edit-handle', html: '<div class="handle-icon"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
     }).addTo(map);
     handle.on('drag', e => { center = e.target.getLatLng(); redraw(); });
   } else {
@@ -782,6 +790,16 @@ function onLabelSize() {
   labelSize = parseInt(document.getElementById('labelSz').value, 10) || 11;
   document.getElementById('labelSzVal').textContent = labelSize;
   document.documentElement.style.setProperty('--label-size', labelSize + 'px');
+  saveSession();
+}
+
+function onLineOpacity() {
+  lotLineOpacity = (parseInt(document.getElementById('lotOp').value, 10) || 0) / 100;
+  structLineOpacity = (parseInt(document.getElementById('structOp').value, 10) || 0) / 100;
+  document.getElementById('lotOpVal').textContent = Math.round(lotLineOpacity * 100);
+  document.getElementById('structOpVal').textContent = Math.round(structLineOpacity * 100);
+  if (lotPoly) lotPoly.setStyle({ opacity: lotLineOpacity, fillOpacity: lotLineOpacity * 0.05 });
+  structures.forEach(s => s.poly.setStyle({ opacity: structLineOpacity, fillOpacity: structLineOpacity * 0.15 }));
   saveSession();
 }
 
@@ -877,7 +895,7 @@ function buildLot() {
   lotPts.forEach((ll, i) => {
     const mk = L.marker(ll, {
       draggable: true,
-      icon: L.divIcon({ className: '', html: '<div class="lot-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
+      icon: L.divIcon({ className: 'edit-handle', html: '<div class="lot-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
     }).addTo(map);
     mk.on('drag', e => { lotPts[i] = e.target.getLatLng(); lotPoly.setLatLngs(lotPts); refreshLotDistance(); });
     mk.on('dragend', saveLot);
@@ -970,7 +988,7 @@ function refreshLotDistance() {
   });
   const overallMin = edges.length ? edges[0].d : null;
   const bad = (!inside) || (overallMin !== null && overallMin < bufLot);
-  lotPoly.setStyle({ color: bad ? '#c0392b' : '#2e7d32', fillColor: bad ? '#c0392b' : '#2e7d32', weight: lineWeight });
+  lotPoly.setStyle({ color: bad ? '#c0392b' : '#2e7d32', fillColor: bad ? '#c0392b' : '#2e7d32', weight: lineWeight, opacity: lotLineOpacity, fillOpacity: lotLineOpacity * 0.05 });
   info.style.display = 'block';
   info.className = bad ? 'warn' : 'ok';
   if (!inside) {
@@ -1088,7 +1106,7 @@ function addStructure(pts) {
   pts.forEach((ll, i) => {
     const mk = L.marker(ll, {
       draggable: true,
-      icon: L.divIcon({ className: '', html: '<div class="struct-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
+      icon: L.divIcon({ className: 'edit-handle', html: '<div class="struct-vertex"></div>', iconSize: [10, 10], iconAnchor: [5, 5] })
     }).addTo(map);
     mk.on('drag', e => { s.pts[i] = e.target.getLatLng(); s.poly.setLatLngs(s.pts); refreshStructDistance(); });
     mk.on('dragend', saveStructures);
@@ -1177,7 +1195,7 @@ function refreshStructDistance() {
     }
     if (best.d < overallMin) overallMin = best.d;
     const viol = overlaps || best.d < bufStruct;
-    s.poly.setStyle({ color: viol ? '#c0392b' : '#5a3a99', fillColor: viol ? '#c0392b' : '#7b4bc9', weight: lineWeight });
+    s.poly.setStyle({ color: viol ? '#c0392b' : '#5a3a99', fillColor: viol ? '#c0392b' : '#7b4bc9', weight: lineWeight, opacity: structLineOpacity, fillOpacity: structLineOpacity * 0.15 });
     if (best.from && best.to && isFinite(best.d)) drawDistLine(best.from, best.to, best.d, ref, viol, true);
   });
   const d = overallMin === Infinity ? null : overallMin;
@@ -1598,7 +1616,7 @@ function equipConnector(rec, which, pLL, cXY, ref, dist, color, viol) {
   const labelLL = off ? map.layerPointToLatLng(midPt.add([off.x, off.y])) : midLL;
   const cls = 'dist-label-eq' + (which === 'lot' ? ' lot' : '') + (viol ? ' viol' : '');
   const m = L.marker(labelLL, {
-    draggable: true,
+    draggable: true, zIndexOffset: 2000,
     icon: L.divIcon({ className: '', html: '<div class="' + cls + '">' + fmtM(dist) + ' m</div>', iconSize: [0, 0], iconAnchor: [0, 0] })
   }).addTo(map);
   m.on('drag', () => {
@@ -1720,7 +1738,7 @@ function ensurePlanHandle() {
   if (!planHandle) {
     planHandle = L.marker(planCenter, {
       draggable: true, zIndexOffset: -50,
-      icon: L.divIcon({ className: '', html: '<div class="plan-handle"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
+      icon: L.divIcon({ className: 'edit-handle', html: '<div class="plan-handle"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
     }).addTo(map);
     planHandle.on('drag', e => { planCenter = e.target.getLatLng(); updatePlan(); });
     planHandle.on('dragend', savePlan);
@@ -1908,6 +1926,8 @@ function saveSessionNow() {
       lineW: lineWeight,
       labelSz: labelSize,
       lang: lang,
+      lotOp: Math.round(lotLineOpacity * 100),
+      structOp: Math.round(structLineOpacity * 100),
       whiteBack: Math.round(planWhiteBack * 100)
     }));
   } catch (e) { /* ignore quota */ }
@@ -1938,6 +1958,16 @@ function restoreSession() {
   if (s.lang) {
     lang = s.lang === 'fr' ? 'fr' : 'en';
     document.getElementById('langBtn').textContent = lang === 'en' ? 'FR' : 'EN';
+  }
+  if (s.lotOp != null) {
+    lotLineOpacity = s.lotOp / 100;
+    document.getElementById('lotOp').value = s.lotOp;
+    document.getElementById('lotOpVal').textContent = s.lotOp;
+  }
+  if (s.structOp != null) {
+    structLineOpacity = s.structOp / 100;
+    document.getElementById('structOp').value = s.structOp;
+    document.getElementById('structOpVal').textContent = s.structOp;
   }
   if (s.whiteBack != null) {
     document.getElementById('planWhite').value = s.whiteBack;
