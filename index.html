@@ -965,7 +965,7 @@ function nudgePoolLot(i) {
 function drawDistLine(fromXY, toXY, dist, ref, viol, isStruct) {
   const color = viol ? '#c0392b' : (isStruct ? '#5a3a99' : '#2e7d32');
   const line = L.polyline([xyToLL(fromXY, ref), xyToLL(toXY, ref)], {
-    color: color, weight: lineWeight, opacity: 0.95
+    color: color, weight: lineWeight, opacity: 0.95, dashArray: '6 4'
   }).addTo(map);
   const cls = 'dist-tip' + (isStruct ? ' struct' : '') + (viol ? ' viol' : '');
   line.bindTooltip(fmtM(dist) + ' m', { permanent: true, direction: 'center', className: cls }).openTooltip();
