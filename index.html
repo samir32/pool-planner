@@ -41,7 +41,7 @@
     gap: 14px;
     z-index: 1000;
   }
-  #map { flex: 1; height: 100%; }
+  #map { flex: 1; height: 100%; position: relative; }
   h1 {
     font-size: 15px;
     font-weight: 700;
@@ -162,13 +162,30 @@
   .leaflet-tooltip.dist-tip.viol { color: #fff; background: var(--warn); border-color: var(--warn); }
   .leaflet-tooltip.dist-tip::before { display: none; }
   .annot-pin {
-    transform: translate(-50%, -120%);
-    font-size: 11px; font-weight: 700; color: #fff;
-    padding: 2px 6px; border-radius: 10px; white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.55); cursor: move;
+    display: inline-flex; align-items: center; gap: 3px;
+    transform: translate(-6px, -50%); white-space: nowrap; cursor: move;
   }
-  .annot-pin.eq { background: var(--ink); }
-  .annot-pin.sf { background: var(--warn); }
+  .annot-pin .sym {
+    width: 11px; height: 11px; flex: none;
+    border: 1px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.45);
+  }
+  .annot-pin .txt {
+    background: rgba(255,255,255,0.92); color: var(--ink);
+    font-size: 11px; font-weight: 700; padding: 0 4px; border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .annot-pin.eq .sym { background: var(--ink); }
+  .annot-pin.sf .sym { background: var(--warn); }
+  #infoBox {
+    position: absolute; top: 78px; left: 10px; z-index: 1100; display: none;
+    max-width: 300px; background: rgba(255,255,255,0.94);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; line-height: 1.5; color: var(--ink);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.28);
+  }
+  #infoBox h2 { font-size: 12.5px; margin-bottom: 4px; color: var(--water); }
+  #infoBox .warn { color: var(--warn); font-weight: 700; }
+  body.clean #infoBox, body.showinfo #infoBox { display: block; }
   input[type="number"].dedit {
     width: 64px; padding: 1px 4px; font-size: 12px; font-weight: 700;
     border: 1px solid var(--line); border-radius: 4px; text-align: right;
@@ -346,7 +363,7 @@
     <label for="planWhite" style="margin-top:4px">White backing: <span id="planWhiteVal">0</span>%</label>
     <input type="range" id="planWhite" min="0" max="100" value="0" step="5" oninput="onPlanControls()">
     <button onclick="removePlan()">Remove plan</button>
-    <p class="hint">Upload a survey or site plan image, then drag the pink handle to position it and use the sliders to scale it (match a known length, e.g. a 31 m property line), rotate and fade it over the satellite view. The white backing puts a solid sheet behind the plan so its lines stay legible over dark imagery. The pool draws on top. Saved per location in this browser.</p>
+    <p class="hint">Upload a survey or site plan image, then drag the pink handle to position it and use the sliders to scale it (match a known length, e.g. a 31 m property line), rotate and fade it over the satellite view. The white backing lays an adjustable white sheet over the whole view (behind the plan and drawings) so the plan lines stay legible: raise it toward 100% for a clean white page, or keep it low to still see the imagery. The pool draws on top. Saved per location in this browser.</p>
   </div>
 
   <div class="group">
@@ -369,6 +386,7 @@
     <div class="row">
       <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
       <button onclick="toggleClean()">Clean view</button>
+      <button onclick="toggleInfoBox()">Info box</button>
     </div>
     <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and distance lines as a PNG with a scale bar for a permit application (the uploaded site plan is not included; use Clean view plus a screenshot for that). Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
   </div>
@@ -378,7 +396,7 @@
 
   <p class="footer-note">Imagery: Esri World Imagery. Georeferencing is typically accurate to within about a metre at this zoom, but verify scale with the measure tool before trusting tight clearances. This is a planning aid, not a survey.</p>
 </div>
-<div id="map"></div>
+<div id="map"><div id="infoBox"></div></div>
 <button id="exitClean" onclick="toggleClean()">Show panel</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -405,8 +423,9 @@ let lineWeight = 3;        // user-controllable line width
 let lotNearest = [];       // the two nearest lot connectors, for editable nudging
 
 // site plan overlay state
-let planImg = null, planBg = null, planCenter = null, planHandle = null, planDataUrl = null;
+let planImg = null, planCenter = null, planHandle = null, planDataUrl = null;
 let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65, planWhiteBack = 0;
+let whiteBg = null; // full-view white backdrop (opacity from the white-backing slider)
 
 // equipment + safety annotation pins, and their distance lines
 let annotations = []; // { kind, marker }
@@ -428,6 +447,26 @@ map = L.map('map', { doubleClickZoom: false }).setView(center, 18);
 map.createPane('planPane');
 map.getPane('planPane').style.zIndex = 250;
 map.getPane('planPane').style.pointerEvents = 'none';
+// full-view white backdrop pane, above imagery (200) and below the plan (250)
+map.createPane('whitePane');
+map.getPane('whitePane').style.zIndex = 240;
+map.getPane('whitePane').style.pointerEvents = 'none';
+whiteBg = L.DomUtil.create('div', 'white-page', map.getPane('whitePane'));
+whiteBg.style.position = 'absolute';
+whiteBg.style.background = '#fff';
+whiteBg.style.opacity = 0;
+whiteBg.style.display = 'none';
+
+function updateWhiteBg() {
+  if (!whiteBg) return;
+  whiteBg.style.opacity = planWhiteBack;
+  whiteBg.style.display = planWhiteBack > 0 ? '' : 'none';
+  const size = map.getSize();
+  whiteBg.style.width = size.x + 'px';
+  whiteBg.style.height = size.y + 'px';
+  L.DomUtil.setPosition(whiteBg, map.containerPointToLayerPoint([0, 0]));
+}
+map.on('move zoom zoomend viewreset resize', updateWhiteBg);
 const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 21, maxNativeZoom: 19,
   attribution: 'Esri World Imagery'
@@ -655,6 +694,8 @@ function redraw() {
   refreshStructDistance();
   refreshEquip();
   updateCoverage();
+  updateInfoBox();
+  saveSession();
 }
 
 function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
@@ -691,6 +732,7 @@ function onLineWidth() {
   lineWeight = parseInt(document.getElementById('lineW').value, 10) || 3;
   document.getElementById('lineWVal').textContent = lineWeight;
   redraw();
+  saveSession();
 }
 
 map.on('dblclick', e => {
@@ -1371,8 +1413,21 @@ function annotateCanvas(canvas) {
   annotations.forEach(rec => {
     const def = ANNOT[rec.kind];
     const pt = map.latLngToContainerPoint(rec.marker.getLatLng());
-    const bg = def.cls === 'eq' ? '#1c2733' : '#c0392b';
-    canvasPill(ctx, pt.x, pt.y - 12, def.label, bg, '#fff', bg);
+    const sym = def.cls === 'eq' ? '#1c2733' : '#c0392b';
+    // square symbol
+    ctx.fillStyle = sym; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.fillRect(pt.x - 5, pt.y - 5, 10, 10);
+    ctx.strokeRect(pt.x - 5, pt.y - 5, 10, 10);
+    // readable label to the right: dark text on white
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    const lw = ctx.measureText(def.label).width + 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fillRect(pt.x + 8, pt.y - 7, lw, 14);
+    ctx.strokeStyle = '#c9c9c9';
+    ctx.strokeRect(pt.x + 8, pt.y - 7, lw, 14);
+    ctx.fillStyle = '#1c2733';
+    ctx.fillText(def.label, pt.x + 11, pt.y);
   });
   ctx.textAlign = 'left';
 
@@ -1422,7 +1477,7 @@ function addAnnotation(kind, latlng) {
   const ll = latlng || offsetLatLng(center, 4 + 2 * annotations.length, -3);
   const marker = L.marker(ll, {
     draggable: true,
-    icon: L.divIcon({ className: '', html: '<div class="annot-pin ' + def.cls + '">' + def.label + '</div>', iconSize: [0, 0], iconAnchor: [0, 0] })
+    icon: L.divIcon({ className: '', html: '<div class="annot-pin ' + def.cls + '"><span class="sym"></span><span class="txt">' + def.label + '</span></div>', iconSize: [0, 0], iconAnchor: [0, 0] })
   }).addTo(map);
   const rec = { kind: kind, marker: marker };
   marker.on('drag', refreshEquip);
@@ -1538,14 +1593,7 @@ function setPlan(dataUrl) {
   planRot = parseFloat(document.getElementById('planRotate').value);
   planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
   planWhiteBack = parseFloat(document.getElementById('planWhite').value) / 100;
-  // white backing sheet first so it renders behind the plan image
-  if (!planBg) {
-    planBg = L.DomUtil.create('div', 'plan-bg', map.getPane('planPane'));
-    planBg.style.position = 'absolute';
-    planBg.style.transformOrigin = '50% 50%';
-    planBg.style.pointerEvents = 'none';
-    planBg.style.background = '#fff';
-  }
+  updateWhiteBg();
   if (!planImg) {
     // placed in a dedicated pane so it sits above imagery but below the pool and overlays
     planImg = L.DomUtil.create('img', 'plan-overlay', map.getPane('planPane'));
@@ -1584,7 +1632,9 @@ function onPlanControls() {
   document.getElementById('planOpacityVal').textContent = Math.round(planOpacity * 100);
   document.getElementById('planWhiteVal').textContent = Math.round(planWhiteBack * 100);
   updatePlan();
+  updateWhiteBg();
   savePlan();
+  saveSession();
 }
 
 function updatePlan() {
@@ -1600,13 +1650,6 @@ function updatePlan() {
   planImg.style.height = hpx + 'px';
   planImg.style.opacity = planOpacity;
   planImg.style.transform = transform;
-  if (planBg) {
-    planBg.style.width = wpx + 'px';
-    planBg.style.height = hpx + 'px';
-    planBg.style.opacity = planWhiteBack;
-    planBg.style.display = planWhiteBack > 0 ? '' : 'none';
-    planBg.style.transform = transform;
-  }
 }
 
 function removePlan() {
@@ -1615,7 +1658,6 @@ function removePlan() {
   localStorage.setItem('plans', JSON.stringify(store));
   planDataUrl = null;
   if (planImg) { planImg.remove(); planImg = null; }
-  if (planBg) { planBg.remove(); planBg = null; }
   if (planHandle) { map.removeLayer(planHandle); planHandle = null; }
   planCenter = null;
   document.getElementById('planFile').value = '';
@@ -1664,7 +1706,114 @@ map.on('zoomend viewreset moveend', updatePlan);
 // ---- clean view (hide the panel for a full-bleed screenshot) ----
 function toggleClean() {
   document.body.classList.toggle('clean');
-  setTimeout(() => { map.invalidateSize(); updatePlan(); }, 60);
+  setTimeout(() => { map.invalidateSize(); updatePlan(); updateWhiteBg(); updateInfoBox(); }, 60);
+}
+
+function toggleInfoBox() {
+  document.body.classList.toggle('showinfo');
+  updateInfoBox();
+}
+
+function updateInfoBox() {
+  const box = document.getElementById('infoBox');
+  if (!document.body.classList.contains('clean') && !document.body.classList.contains('showinfo')) {
+    box.style.display = 'none';
+    return;
+  }
+  const shape = document.getElementById('shape').value;
+  const wFt = parseFloat(document.getElementById('wFt').value) || 0;
+  const lFt = parseFloat(document.getElementById('lFt').value) || 0;
+  const bufLot = parseFloat(document.getElementById('bufLot').value);
+  const bufStruct = parseFloat(document.getElementById('bufStruct').value);
+  const shapeName = shape === 'rect' ? 'Rectangle' : (shape === 'round' ? 'Round' : 'Oval');
+  const footFt2 = poolFootprintFt2();
+  const footM2 = footFt2 * FT * FT;
+  let html = '<h2>Pool plan summary</h2>';
+  html += '<b>Pool:</b> ' + shapeName + ' ' + fmt(wFt) + (shape === 'round' ? '' : ' x ' + fmt(lFt)) + ' ft (' +
+    (wFt * FT).toFixed(2) + (shape === 'round' ? '' : ' x ' + (lFt * FT).toFixed(2)) + ' m)<br>';
+  html += '<b>Water area:</b> ' + Math.round(footFt2) + ' ft&sup2; (' + footM2.toFixed(1) + ' m&sup2;)<br>';
+  if (lotPts && lotPts.length >= 3) {
+    const lotM2 = polygonAreaM2(lotPts);
+    const pct = lotM2 ? (footM2 / lotM2 * 100) : 0;
+    const over = pct > MAX_COVERAGE_PCT;
+    html += '<b>Lot area:</b> ' + lotM2.toFixed(1) + ' m&sup2; &middot; <span class="' + (over ? 'warn' : '') + '">' +
+      pct.toFixed(1) + '% pool' + (over ? ' (over ' + MAX_COVERAGE_PCT + '%)' : '') + '</span><br>';
+    if (lotNearest.length) {
+      const lens = lotNearest.map(r => Math.hypot(r.fromXY.x - r.toXY.x, r.fromXY.y - r.toXY.y));
+      const minD = Math.min.apply(null, lens);
+      html += '<b>Lot lines (min ' + fmtBuf(bufLot) + ' m):</b> <span class="' + (minD < bufLot ? 'warn' : '') + '">' +
+        lens.map(d => fmtM(d) + ' m').join(', ') + '</span><br>';
+    }
+  }
+  if (structures.length) {
+    const d = poolStructMinDistance();
+    if (d != null) html += '<b>Nearest structure (min ' + fmtBuf(bufStruct) + ' m):</b> <span class="' +
+      (d < bufStruct ? 'warn' : '') + '">' + fmtM(d) + ' m</span><br>';
+  }
+  const eq = annotations.filter(r => ANNOT[r.kind].measured);
+  if (eq.length && poolPoly) {
+    const ref = center;
+    const pool = poolPoly.getLatLngs()[0].map(ll => llToXY(ll, ref));
+    let anyV = false;
+    const parts = eq.map(rec => {
+      const p = llToXY(rec.marker.getLatLng(), ref);
+      let md = Infinity;
+      for (let i = 0; i < pool.length; i++) { const r = closestPtSeg(p, pool[i], pool[(i + 1) % pool.length]); if (r.d < md) md = r.d; }
+      if (md < EQUIP_MIN_M) anyV = true;
+      return ANNOT[rec.kind].label + ' ' + fmtM(md) + ' m';
+    });
+    html += '<b>Equipment (min ' + EQUIP_MIN_M + ' m):</b> <span class="' + (anyV ? 'warn' : '') + '">' + parts.join(', ') + '</span><br>';
+  }
+  const sf = annotations.filter(r => ANNOT[r.kind].cls === 'sf');
+  if (sf.length) html += '<b>Safety access:</b> ' + sf.map(r => ANNOT[r.kind].label).join(', ');
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
+// ---- session autosave (pool, setbacks, line width, backdrop, map view) ----
+let _sessTimer = null;
+function saveSession() { clearTimeout(_sessTimer); _sessTimer = setTimeout(saveSessionNow, 350); }
+function saveSessionNow() {
+  try {
+    localStorage.setItem('session', JSON.stringify({
+      lat: center.lat, lng: center.lng, zoom: map.getZoom(),
+      shape: document.getElementById('shape').value,
+      w: document.getElementById('wFt').value,
+      l: document.getElementById('lFt').value,
+      rot: document.getElementById('rot').value,
+      bufLot: document.getElementById('bufLot').value,
+      bufStruct: document.getElementById('bufStruct').value,
+      lineW: lineWeight,
+      whiteBack: Math.round(planWhiteBack * 100)
+    }));
+  } catch (e) { /* ignore quota */ }
+}
+
+function restoreSession() {
+  const raw = localStorage.getItem('session');
+  if (!raw) return;
+  let s;
+  try { s = JSON.parse(raw); } catch (e) { return; }
+  if (s.shape) document.getElementById('shape').value = s.shape;
+  if (s.w != null) document.getElementById('wFt').value = s.w;
+  if (s.l != null) document.getElementById('lFt').value = s.l;
+  if (s.rot != null) document.getElementById('rot').value = s.rot;
+  if (s.bufLot != null) document.getElementById('bufLot').value = s.bufLot;
+  if (s.bufStruct != null) document.getElementById('bufStruct').value = s.bufStruct;
+  if (s.lineW != null) {
+    lineWeight = parseInt(s.lineW, 10) || 3;
+    document.getElementById('lineW').value = lineWeight;
+    document.getElementById('lineWVal').textContent = lineWeight;
+  }
+  if (s.whiteBack != null) {
+    document.getElementById('planWhite').value = s.whiteBack;
+    document.getElementById('planWhiteVal').textContent = s.whiteBack;
+    planWhiteBack = s.whiteBack / 100;
+  }
+  if (s.lat != null && s.lng != null) {
+    center = L.latLng(s.lat, s.lng);
+    map.setView(center, s.zoom || map.getZoom());
+  }
 }
 
 // ---- geocoding ----
@@ -1693,6 +1842,7 @@ async function geocode() {
   }
 }
 
+restoreSession();
 onShapeChange();
 renderScenarios();
 restoreTileLayers();
@@ -1700,6 +1850,9 @@ restoreLot();
 restoreStructures();
 restorePlan();
 restoreAnnotations();
+updateWhiteBg();
+updateInfoBox();
+map.on('zoomend', saveSession);
 </script>
 </body>
 </html>
