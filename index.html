@@ -169,6 +169,11 @@
   }
   .annot-pin.eq { background: var(--ink); }
   .annot-pin.sf { background: var(--warn); }
+  input[type="number"].dedit {
+    width: 64px; padding: 1px 4px; font-size: 12px; font-weight: 700;
+    border: 1px solid var(--line); border-radius: 4px; text-align: right;
+    display: inline-block;
+  }
   #equipInfo, #coverageInfo { font-size: 12px; font-weight: 600; line-height: 1.4; display: none; }
   #equipInfo.ok, #coverageInfo.ok { color: var(--lot); }
   #equipInfo.warn, #coverageInfo.warn { color: var(--warn); }
@@ -248,7 +253,12 @@
     <input type="range" id="bufLot" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
     <label for="bufStruct" style="margin-top:4px">Structure setback (m): <span id="bufStructVal">1.5</span></label>
     <input type="range" id="bufStruct" min="0" max="6" value="1.5" step="0.25" oninput="redraw()">
-    <p class="hint">The shortest distance from the pool to the two nearest lot lines, and to each structure, is drawn and labelled on the map. A line turns red when it is under its setback. Many Quebec municipalities require 1.5 m; check your local bylaw.</p>
+    <p class="hint">The shortest distance from the pool to the two nearest lot lines, and to each structure, is drawn and labelled on the map. A line turns red when it is under its setback. Distances read to the nearest 0.05 m; type a value in the readout to nudge the pool. Many Quebec municipalities require 1.5 m; check your local bylaw.</p>
+  </div>
+
+  <div class="group">
+    <label for="lineW">Line width: <span id="lineWVal">3</span> px</label>
+    <input type="range" id="lineW" min="1" max="8" value="3" step="1" oninput="onLineWidth()">
   </div>
 
   <div class="group">
@@ -276,12 +286,13 @@
   <div class="group">
     <label>Equipment (heat pump, pump, filter)</label>
     <div class="presets">
+      <button class="mini" onclick="addAnnotation('set')">+ Equipment set</button>
       <button class="mini" onclick="addAnnotation('hp')">+ Heat pump</button>
       <button class="mini" onclick="addAnnotation('pump')">+ Pump</button>
       <button class="mini" onclick="addAnnotation('filter')">+ Filter</button>
     </div>
     <div id="equipInfo"></div>
-    <p class="hint">Drop equipment pins and drag them into place. Each shows its distance to the nearest pool wall and turns red under 1 m (equipment must sit at least 1 m from the pool). Click a pin to remove it. Saved per location.</p>
+    <p class="hint">Use "Equipment set" for a single pin covering the pump, heat pump and filter together, or drop them individually. Drag into place. Each shows its distance to the nearest pool wall and turns red under 1 m (equipment must sit at least 1 m from the pool). Click a pin to remove it. Saved per location.</p>
   </div>
 
   <div class="group">
@@ -332,8 +343,10 @@
     <input type="range" id="planRotate" min="0" max="359" value="0" step="1" oninput="onPlanControls()">
     <label for="planOpacity" style="margin-top:4px">Plan opacity: <span id="planOpacityVal">65</span>%</label>
     <input type="range" id="planOpacity" min="0" max="100" value="65" step="5" oninput="onPlanControls()">
+    <label for="planWhite" style="margin-top:4px">White backing: <span id="planWhiteVal">0</span>%</label>
+    <input type="range" id="planWhite" min="0" max="100" value="0" step="5" oninput="onPlanControls()">
     <button onclick="removePlan()">Remove plan</button>
-    <p class="hint">Upload a survey or site plan image, then drag the pink handle to position it and use the sliders to scale it (match a known length, e.g. a 31 m property line), rotate and fade it over the satellite view. The pool draws on top. Saved per location in this browser.</p>
+    <p class="hint">Upload a survey or site plan image, then drag the pink handle to position it and use the sliders to scale it (match a known length, e.g. a 31 m property line), rotate and fade it over the satellite view. The white backing puts a solid sheet behind the plan so its lines stay legible over dark imagery. The pool draws on top. Saved per location in this browser.</p>
   </div>
 
   <div class="group">
@@ -387,14 +400,19 @@ let structures = []; // each: { pts: [latlng], poly: L.polygon, markers: [marker
 // setback distance lines (drawn instead of rings)
 let lotDistLayers = [], structDistLayers = [];
 
+// setback distance lines (drawn instead of rings)
+let lineWeight = 3;        // user-controllable line width
+let lotNearest = [];       // the two nearest lot connectors, for editable nudging
+
 // site plan overlay state
-let planImg = null, planCenter = null, planHandle = null, planDataUrl = null;
-let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65;
+let planImg = null, planBg = null, planCenter = null, planHandle = null, planDataUrl = null;
+let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65, planWhiteBack = 0;
 
 // equipment + safety annotation pins, and their distance lines
 let annotations = []; // { kind, marker }
 let equipDistLayers = [];
 const ANNOT = {
+  set:     { label: 'Equipment', cls: 'eq', measured: true },
   hp:      { label: 'Heat pump', cls: 'eq', measured: true },
   pump:    { label: 'Pump',      cls: 'eq', measured: true },
   filter:  { label: 'Filter',    cls: 'eq', measured: true },
@@ -605,11 +623,12 @@ function redraw() {
 
   if (!poolPoly) {
     poolPoly = L.polygon(poolPts, {
-      color: '#0d6a85', weight: 2,
+      color: '#0d6a85', weight: lineWeight,
       fill: true, fillColor: '#1587a8', fillOpacity: 0.55
     }).addTo(map);
   } else {
     poolPoly.setLatLngs(poolPts);
+    poolPoly.setStyle({ weight: lineWeight });
   }
 
   if (!handle) {
@@ -640,6 +659,8 @@ function redraw() {
 
 function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toString(); }
 function fmtBuf(n) { return n.toFixed(2).replace(/\.?0+$/, '') || '0'; }
+function round05(x) { return Math.round(x / 0.05) * 0.05; } // nearest 5 cm
+function fmtM(x) { return round05(x).toFixed(2); }
 
 function onShapeChange() {
   const shape = document.getElementById('shape').value;
@@ -664,6 +685,12 @@ function setPreset(shape, w, l) {
   document.getElementById('wFt').value = w;
   document.getElementById('lFt').value = l;
   onShapeChange();
+}
+
+function onLineWidth() {
+  lineWeight = parseInt(document.getElementById('lineW').value, 10) || 3;
+  document.getElementById('lineWVal').textContent = lineWeight;
+  redraw();
 }
 
 map.on('dblclick', e => {
@@ -706,7 +733,7 @@ map.on('click', e => {
     const last = measurePts[measurePts.length - 2].distanceTo(measurePts[measurePts.length - 1]);
     const info = document.getElementById('measureInfo');
     info.style.display = 'block';
-    info.textContent = 'Last segment: ' + last.toFixed(2) + ' m (' + (last / FT).toFixed(1) + ' ft)  |  Total: ' + total.toFixed(2) + ' m (' + (total / FT).toFixed(1) + ' ft)';
+    info.textContent = 'Last segment: ' + fmtM(last) + ' m (' + (last / FT).toFixed(1) + ' ft)  |  Total: ' + fmtM(total) + ' m (' + (total / FT).toFixed(1) + ' ft)';
   }
 });
 
@@ -752,7 +779,7 @@ function finishLot() {
 
 function buildLot() {
   if (lotPoly) map.removeLayer(lotPoly);
-  lotPoly = L.polygon(lotPts, { color: '#2e7d32', weight: 2, fill: true, fillColor: '#2e7d32', fillOpacity: 0.05 }).addTo(map);
+  lotPoly = L.polygon(lotPts, { color: '#2e7d32', weight: lineWeight, fill: true, fillColor: '#2e7d32', fillOpacity: 0.05 }).addTo(map);
   lotVertexMarkers.forEach(m => map.removeLayer(m));
   lotVertexMarkers = [];
   lotPts.forEach((ll, i) => {
@@ -843,31 +870,51 @@ function refreshLotDistance() {
   edges.sort((x, y) => x.d - y.d);
   const inside = pointInPoly({ x: 0, y: 0 }, lot);
   const show = edges.slice(0, 2);
+  lotNearest = [];
   show.forEach(e => {
     const viol = (!inside) || e.d < bufLot;
     drawDistLine(e.from, e.to, e.d, ref, viol, false);
+    lotNearest.push({ fromXY: e.from, toXY: e.to, ref: ref });
   });
   const overallMin = edges.length ? edges[0].d : null;
   const bad = (!inside) || (overallMin !== null && overallMin < bufLot);
-  lotPoly.setStyle({ color: bad ? '#c0392b' : '#2e7d32', fillColor: bad ? '#c0392b' : '#2e7d32' });
+  lotPoly.setStyle({ color: bad ? '#c0392b' : '#2e7d32', fillColor: bad ? '#c0392b' : '#2e7d32', weight: lineWeight });
   info.style.display = 'block';
   info.className = bad ? 'warn' : 'ok';
   if (!inside) {
-    info.textContent = 'Pool center is outside the property outline.';
+    info.innerHTML = 'Pool center is outside the property outline.';
   } else {
-    const parts = show.map(e => e.d.toFixed(2) + ' m (' + (e.d / FT).toFixed(1) + ' ft)');
-    info.textContent = 'Two nearest lot lines: ' + parts.join(', ') + '. ' +
+    // editable target distances: type a value to nudge the pool to that setback
+    const fields = show.map((e, i) =>
+      '<input type="number" step="0.05" class="dedit" id="lotEdit' + i + '" value="' + fmtM(e.d) +
+      '" onchange="nudgePoolLot(' + i + ')" title="Type a target distance to move the pool"> m').join(' &nbsp; ');
+    info.innerHTML = 'Two nearest lot lines: ' + fields + '<br>' +
       (overallMin < bufLot ? 'Under the ' + fmtBuf(bufLot) + ' m setback.' : 'Setback OK.');
   }
+}
+
+// move the whole pool so the chosen lot connector equals the typed distance
+function nudgePoolLot(i) {
+  const rec = lotNearest[i];
+  if (!rec) return;
+  const target = parseFloat(document.getElementById('lotEdit' + i).value);
+  if (isNaN(target) || target < 0) return;
+  const dx = rec.fromXY.x - rec.toXY.x, dy = rec.fromXY.y - rec.toXY.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len; // unit vector pointing away from the lot line
+  const t = target - len;
+  center = xyToLL({ x: t * ux, y: t * uy }, rec.ref);
+  if (handle) handle.setLatLng(center);
+  redraw();
 }
 
 function drawDistLine(fromXY, toXY, dist, ref, viol, isStruct) {
   const color = viol ? '#c0392b' : (isStruct ? '#5a3a99' : '#2e7d32');
   const line = L.polyline([xyToLL(fromXY, ref), xyToLL(toXY, ref)], {
-    color: color, weight: 3, opacity: 0.95
+    color: color, weight: lineWeight, opacity: 0.95
   }).addTo(map);
   const cls = 'dist-tip' + (isStruct ? ' struct' : '') + (viol ? ' viol' : '');
-  line.bindTooltip(dist.toFixed(2) + ' m', { permanent: true, direction: 'center', className: cls }).openTooltip();
+  line.bindTooltip(fmtM(dist) + ' m', { permanent: true, direction: 'center', className: cls }).openTooltip();
   (isStruct ? structDistLayers : lotDistLayers).push(line);
 }
 
@@ -945,7 +992,7 @@ function finishStruct() {
 
 function addStructure(pts) {
   const s = { pts: pts, poly: null, markers: [] };
-  s.poly = L.polygon(pts, { color: '#5a3a99', weight: 2, fill: true, fillColor: '#7b4bc9', fillOpacity: 0.15 }).addTo(map);
+  s.poly = L.polygon(pts, { color: '#5a3a99', weight: lineWeight, fill: true, fillColor: '#7b4bc9', fillOpacity: 0.15 }).addTo(map);
   pts.forEach((ll, i) => {
     const mk = L.marker(ll, {
       draggable: true,
@@ -1038,7 +1085,7 @@ function refreshStructDistance() {
     }
     if (best.d < overallMin) overallMin = best.d;
     const viol = overlaps || best.d < bufStruct;
-    s.poly.setStyle({ color: viol ? '#c0392b' : '#5a3a99', fillColor: viol ? '#c0392b' : '#7b4bc9' });
+    s.poly.setStyle({ color: viol ? '#c0392b' : '#5a3a99', fillColor: viol ? '#c0392b' : '#7b4bc9', weight: lineWeight });
     if (best.from && best.to && isFinite(best.d)) drawDistLine(best.from, best.to, best.d, ref, viol, true);
   });
   const d = overallMin === Infinity ? null : overallMin;
@@ -1048,7 +1095,7 @@ function refreshStructDistance() {
   if (overlaps) {
     info.textContent = 'Pool overlaps a structure.';
   } else if (d !== null) {
-    info.textContent = 'Nearest structure: ' + d.toFixed(2) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
+    info.textContent = 'Nearest structure: ' + fmtM(d) + ' m (' + (d / FT).toFixed(1) + ' ft). ' +
       (d < bufStruct ? 'Under the ' + fmtBuf(bufStruct) + ' m setback.' : 'Setback OK.');
   }
 }
@@ -1261,6 +1308,12 @@ function imagerySource() {
 function annotateCanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const H = canvas.height;
+  // fill any transparent areas with white so the exported PNG has a solid background
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
   // scale bar
   const c = map.getCenter();
   const p = map.latLngToContainerPoint(c);
@@ -1429,11 +1482,11 @@ function refreshEquip() {
     const viol = best.d < EQUIP_MIN_M;
     if (viol) anyViol = true;
     const line = L.polyline([pLL, xyToLL(best.c, ref)], {
-      color: viol ? '#c0392b' : '#1c2733', weight: 2, dashArray: '4 3'
+      color: viol ? '#c0392b' : '#1c2733', weight: Math.max(1, lineWeight - 1), dashArray: '4 3'
     }).addTo(map);
-    line.bindTooltip(best.d.toFixed(2) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
+    line.bindTooltip(fmtM(best.d) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
     equipDistLayers.push(line);
-    rows.push(ANNOT[rec.kind].label + ': ' + best.d.toFixed(2) + ' m (' + (best.d / FT).toFixed(1) + ' ft)' + (viol ? ' - under ' + EQUIP_MIN_M + ' m' : ''));
+    rows.push(ANNOT[rec.kind].label + ': ' + fmtM(best.d) + ' m (' + (best.d / FT).toFixed(1) + ' ft)' + (viol ? ' - under ' + EQUIP_MIN_M + ' m' : ''));
   });
   if (rows.length) {
     info.style.display = 'block';
@@ -1484,6 +1537,15 @@ function setPlan(dataUrl) {
   planWidthM = parseFloat(document.getElementById('planScale').value);
   planRot = parseFloat(document.getElementById('planRotate').value);
   planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
+  planWhiteBack = parseFloat(document.getElementById('planWhite').value) / 100;
+  // white backing sheet first so it renders behind the plan image
+  if (!planBg) {
+    planBg = L.DomUtil.create('div', 'plan-bg', map.getPane('planPane'));
+    planBg.style.position = 'absolute';
+    planBg.style.transformOrigin = '50% 50%';
+    planBg.style.pointerEvents = 'none';
+    planBg.style.background = '#fff';
+  }
   if (!planImg) {
     // placed in a dedicated pane so it sits above imagery but below the pool and overlays
     planImg = L.DomUtil.create('img', 'plan-overlay', map.getPane('planPane'));
@@ -1516,9 +1578,11 @@ function onPlanControls() {
   planWidthM = parseFloat(document.getElementById('planScale').value);
   planRot = parseFloat(document.getElementById('planRotate').value);
   planOpacity = parseFloat(document.getElementById('planOpacity').value) / 100;
+  planWhiteBack = parseFloat(document.getElementById('planWhite').value) / 100;
   document.getElementById('planScaleVal').textContent = fmtBuf(planWidthM);
   document.getElementById('planRotVal').textContent = planRot;
   document.getElementById('planOpacityVal').textContent = Math.round(planOpacity * 100);
+  document.getElementById('planWhiteVal').textContent = Math.round(planWhiteBack * 100);
   updatePlan();
   savePlan();
 }
@@ -1531,10 +1595,18 @@ function updatePlan() {
   const pxPerM = 100 / mPer100;
   const wpx = planWidthM * pxPerM;
   const hpx = wpx / (planAspect || 1);
+  const transform = 'translate3d(' + (cPt.x - wpx / 2) + 'px,' + (cPt.y - hpx / 2) + 'px,0) rotate(' + planRot + 'deg)';
   planImg.style.width = wpx + 'px';
   planImg.style.height = hpx + 'px';
   planImg.style.opacity = planOpacity;
-  planImg.style.transform = 'translate3d(' + (cPt.x - wpx / 2) + 'px,' + (cPt.y - hpx / 2) + 'px,0) rotate(' + planRot + 'deg)';
+  planImg.style.transform = transform;
+  if (planBg) {
+    planBg.style.width = wpx + 'px';
+    planBg.style.height = hpx + 'px';
+    planBg.style.opacity = planWhiteBack;
+    planBg.style.display = planWhiteBack > 0 ? '' : 'none';
+    planBg.style.transform = transform;
+  }
 }
 
 function removePlan() {
@@ -1543,6 +1615,7 @@ function removePlan() {
   localStorage.setItem('plans', JSON.stringify(store));
   planDataUrl = null;
   if (planImg) { planImg.remove(); planImg = null; }
+  if (planBg) { planBg.remove(); planBg = null; }
   if (planHandle) { map.removeLayer(planHandle); planHandle = null; }
   planCenter = null;
   document.getElementById('planFile').value = '';
@@ -1554,7 +1627,7 @@ function savePlan() {
     const store = JSON.parse(localStorage.getItem('plans') || '{}');
     // guard the ~5 MB localStorage quota: skip persistence for very large images
     if (planDataUrl.length < 3500000) {
-      store[lotKey(planCenter)] = { url: planDataUrl, lat: planCenter.lat, lng: planCenter.lng, w: planWidthM, rot: planRot, op: planOpacity };
+      store[lotKey(planCenter)] = { url: planDataUrl, lat: planCenter.lat, lng: planCenter.lng, w: planWidthM, rot: planRot, op: planOpacity, wb: planWhiteBack };
       localStorage.setItem('plans', JSON.stringify(store));
     }
   } catch (e) { /* quota exceeded: keep the plan in memory for this session only */ }
@@ -1573,12 +1646,15 @@ function restorePlan() {
   if (best && bestD < 300) {
     const rec = store[best];
     planCenter = L.latLng(rec.lat, rec.lng);
+    const wb = rec.wb != null ? Math.round(rec.wb * 100) : 0;
     document.getElementById('planScale').value = rec.w;
     document.getElementById('planRotate').value = rec.rot;
     document.getElementById('planOpacity').value = Math.round(rec.op * 100);
+    document.getElementById('planWhite').value = wb;
     document.getElementById('planScaleVal').textContent = fmtBuf(rec.w);
     document.getElementById('planRotVal').textContent = rec.rot;
     document.getElementById('planOpacityVal').textContent = Math.round(rec.op * 100);
+    document.getElementById('planWhiteVal').textContent = wb;
     setPlan(rec.url);
   }
 }
