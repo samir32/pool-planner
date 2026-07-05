@@ -198,12 +198,25 @@
   #equipInfo.warn, #coverageInfo.warn { color: var(--warn); }
   #exitClean {
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-    z-index: 1200; display: none;
+    z-index: 1200; display: none; opacity: 0; transition: opacity 0.2s ease;
     background: var(--ink); color: #fff; border-color: var(--ink);
     box-shadow: 0 1px 6px rgba(0,0,0,0.4);
   }
   body.clean #sidebar { display: none; }
   body.clean #exitClean { display: block; }
+  body.clean #exitClean:hover { opacity: 1; }
+  /* keep a thin always-hoverable strip at the very top so the hidden button is reachable */
+  body.clean #exitClean::before { content: ""; position: absolute; top: -10px; left: -40px; right: -40px; height: 30px; }
+  body.clean .leaflet-control-layers { display: none; }
+  .dist-label-eq {
+    transform: translate(-50%, -50%);
+    background: #fff; color: var(--ink); border: 1px solid var(--ink);
+    border-radius: 3px; font-size: var(--label-size); font-weight: 700;
+    line-height: 1.25; padding: 0 3px; white-space: nowrap; cursor: move;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .dist-label-eq.lot { color: var(--lot); border-color: var(--lot); }
+  .dist-label-eq.viol { color: #fff; background: var(--warn); border-color: var(--warn); }
   input[type="file"] { font-size: 12px; }
   @media (max-width: 700px) {
     body { flex-direction: column; }
@@ -391,6 +404,7 @@
       <button id="exportBtn" onclick="exportPng()">Export view as PNG</button>
       <button onclick="toggleClean()">Clean view</button>
       <button onclick="toggleInfoBox()">Info box</button>
+      <button id="langBtn" onclick="toggleLang()">FR</button>
     </div>
     <p class="hint">In measure mode, click points on the map to check setbacks or verify imagery scale against a known dimension (e.g. your house wall). Export saves the current map, pool and distance lines as a PNG with a scale bar for a permit application (the uploaded site plan is not included; use Clean view plus a screenshot for that). Google imagery cannot be captured (browser limit); if Google is showing, the export uses your Mapbox layer when added, otherwise Esri.</p>
   </div>
@@ -433,17 +447,41 @@ let planWidthM = 40, planAspect = 1, planRot = 0, planOpacity = 0.65, planWhiteB
 let whiteBg = null; // full-view white backdrop (opacity from the white-backing slider)
 
 // equipment + safety annotation pins, and their distance lines
-let annotations = []; // { kind, marker }
-let equipDistLayers = [];
+let annotations = []; // { kind, marker, labelOff }
+let equipDistLayers = [];   // connector polylines
+let equipLabelMarkers = []; // draggable distance labels for equipment
 const ANNOT = {
-  set:     { label: 'Equipment', cls: 'eq', measured: true },
-  hp:      { label: 'Heat pump', cls: 'eq', measured: true },
-  pump:    { label: 'Pump',      cls: 'eq', measured: true },
-  filter:  { label: 'Filter',    cls: 'eq', measured: true },
-  ladder:  { label: 'Ladder',    cls: 'sf', measured: false },
-  gate:    { label: 'Gate',      cls: 'sf', measured: false },
-  opening: { label: 'Opening',   cls: 'sf', measured: false }
+  set:     { label: 'Equipment', fr: 'Équipement',  cls: 'eq', measured: true },
+  hp:      { label: 'Heat pump', fr: 'Thermopompe', cls: 'eq', measured: true },
+  pump:    { label: 'Pump',      fr: 'Pompe',        cls: 'eq', measured: true },
+  filter:  { label: 'Filter',    fr: 'Filtre',       cls: 'eq', measured: true },
+  ladder:  { label: 'Ladder',    fr: 'Échelle',      cls: 'sf', measured: false },
+  gate:    { label: 'Gate',      fr: 'Portail',      cls: 'sf', measured: false },
+  opening: { label: 'Opening',   fr: 'Ouverture',    cls: 'sf', measured: false }
 };
+function annotLabel(kind) { const d = ANNOT[kind]; return lang === 'fr' ? d.fr : d.label; }
+
+// language for the clean-view summary, pins and export (permit-facing content)
+let lang = 'en';
+const T = {
+  en: {
+    summary: 'Pool plan summary', pool: 'Pool', water: 'Water area', lotArea: 'Lot area',
+    covPool: 'pool', over: 'over', max: 'max', lotLines: 'Lot lines', nearStruct: 'Nearest structure',
+    equipment: 'Equipment', safety: 'Safety access', min: 'min', wPool: 'pool', wLot: 'lot',
+    setbacks: 'setbacks', property: 'property', structures: 'structures', imagery: 'Imagery',
+    note: 'Planning aid, not a survey.', legOk: 'Setback distance (OK)', legUnder: 'Under setback / under 1 m',
+    legStruct: 'Structure', legEquip: 'Equipment', legSafety: 'Safety access (ladder / gate)'
+  },
+  fr: {
+    summary: 'Résumé du plan de piscine', pool: 'Piscine', water: "Superficie d'eau", lotArea: 'Superficie du terrain',
+    covPool: 'piscine', over: 'dépasse', max: 'max', lotLines: 'Lignes de terrain', nearStruct: 'Bâtiment le plus proche',
+    equipment: 'Équipement', safety: 'Accès sécurité', min: 'min', wPool: 'piscine', wLot: 'terrain',
+    setbacks: 'marges', property: 'terrain', structures: 'bâtiments', imagery: 'Imagerie',
+    note: "Outil de planification, pas un certificat de localisation.", legOk: 'Distance de marge (OK)', legUnder: 'Sous la marge / sous 1 m',
+    legStruct: 'Bâtiment', legEquip: 'Équipement', legSafety: 'Accès sécurité (échelle / portail)'
+  }
+};
+function t(k) { return (T[lang] && T[lang][k]) || T.en[k] || k; }
 const EQUIP_MIN_M = 1; // equipment must sit at least 1 m from the pool wall
 const MAX_COVERAGE_PCT = 15; // pool footprint cannot exceed 15% of the lot
 
@@ -1400,7 +1438,7 @@ function annotateCanvas(canvas) {
   const bufLot = document.getElementById('bufLot').value;
   const bufStruct = document.getElementById('bufStruct').value;
   const dateStr = new Date().toISOString().slice(0, 10);
-  const cap = 'Pool ' + wFt + ' x ' + lFt + ' ft ' + shape + ', setbacks ' + bufLot + ' m property / ' + bufStruct + ' m structures. Vaudreuil-Dorion QC. ' + dateStr + '. Imagery: ' + imagerySource() + '. Planning aid, not a survey.';
+  const cap = t('pool') + ' ' + wFt + ' x ' + lFt + ' ft ' + shape + ', ' + t('setbacks') + ' ' + bufLot + ' m ' + t('property') + ' / ' + bufStruct + ' m ' + t('structures') + '. Vaudreuil-Dorion QC. ' + dateStr + '. ' + t('imagery') + ': ' + imagerySource() + '. ' + t('note');
   ctx.font = '13px sans-serif';
   const tw = ctx.measureText(cap).width;
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -1413,7 +1451,8 @@ function annotateCanvas(canvas) {
   // markers, so redraw the distance numbers and the pins onto the canvas here.
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
-  [].concat(lotDistLayers, structDistLayers, equipDistLayers).forEach(line => {
+  // lot and structure labels are tooltips bound to their lines
+  [].concat(lotDistLayers, structDistLayers).forEach(line => {
     if (typeof line.getLatLngs !== 'function') return;
     const lls = line.getLatLngs();
     if (lls.length < 2) return;
@@ -1422,8 +1461,14 @@ function annotateCanvas(canvas) {
     const txt = line.getTooltip() ? line.getTooltip().getContent() : '';
     canvasPill(ctx, pt.x, pt.y, txt, '#fff', line.options.color, line.options.color);
   });
+  // equipment labels are draggable markers at user-set positions
+  equipLabelMarkers.forEach(m => {
+    const pt = map.latLngToContainerPoint(m.getLatLng());
+    canvasPill(ctx, pt.x, pt.y, m._exportText, '#fff', m._exportColor, m._exportColor);
+  });
   annotations.forEach(rec => {
     const def = ANNOT[rec.kind];
+    const label = annotLabel(rec.kind);
     const pt = map.latLngToContainerPoint(rec.marker.getLatLng());
     const sym = def.cls === 'eq' ? '#1c2733' : '#c0392b';
     // square symbol
@@ -1434,23 +1479,23 @@ function annotateCanvas(canvas) {
     ctx.font = labelSize + 'px sans-serif';
     ctx.textAlign = 'left';
     const lh = labelSize + 4;
-    const lw = ctx.measureText(def.label).width + 6;
+    const lw = ctx.measureText(label).width + 6;
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
     ctx.fillRect(pt.x + 8, pt.y - lh / 2, lw, lh);
     ctx.strokeStyle = '#c9c9c9';
     ctx.strokeRect(pt.x + 8, pt.y - lh / 2, lw, lh);
     ctx.fillStyle = '#1c2733';
-    ctx.fillText(def.label, pt.x + 11, pt.y);
+    ctx.fillText(label, pt.x + 11, pt.y);
   });
   ctx.textAlign = 'left';
 
   // legend
   const legend = [
-    ['#2e7d32', 'Setback distance (OK)'],
-    ['#c0392b', 'Under setback / under 1 m'],
-    ['#5a3a99', 'Structure'],
-    ['#1c2733', 'Equipment'],
-    ['#c0392b', 'Safety access (ladder / gate)']
+    ['#2e7d32', t('legOk')],
+    ['#c0392b', t('legUnder')],
+    ['#5a3a99', t('legStruct')],
+    ['#1c2733', t('legEquip')],
+    ['#c0392b', t('legSafety')]
   ];
   ctx.font = '12px sans-serif';
   let lw = 0;
@@ -1484,20 +1529,22 @@ function canvasPill(ctx, x, y, text, bg, fg, border) {
 // ---- equipment + safety annotation pins ----
 function offsetLatLng(c, dx, dy) { const o = offset(c, dx, dy); return L.latLng(o[0], o[1]); }
 
-function addAnnotation(kind, latlng) {
+function annotIcon(kind) {
+  const def = ANNOT[kind];
+  return L.divIcon({ className: '', html: '<div class="annot-pin ' + def.cls + '"><span class="sym"></span><span class="txt">' + annotLabel(kind) + '</span></div>', iconSize: [0, 0], iconAnchor: [0, 0] });
+}
+
+function addAnnotation(kind, latlng, labelOff) {
   const def = ANNOT[kind];
   if (!def) return;
   const ll = latlng || offsetLatLng(center, 4 + 2 * annotations.length, -3);
-  const marker = L.marker(ll, {
-    draggable: true,
-    icon: L.divIcon({ className: '', html: '<div class="annot-pin ' + def.cls + '"><span class="sym"></span><span class="txt">' + def.label + '</span></div>', iconSize: [0, 0], iconAnchor: [0, 0] })
-  }).addTo(map);
-  const rec = { kind: kind, marker: marker };
+  const marker = L.marker(ll, { draggable: true, icon: annotIcon(kind) }).addTo(map);
+  const rec = { kind: kind, marker: marker, labelOff: labelOff || {} };
   marker.on('drag', refreshEquip);
   marker.on('dragend', saveAnnotations);
   const btn = document.createElement('button');
   btn.className = 'mini';
-  btn.textContent = 'Remove ' + def.label;
+  btn.textContent = (lang === 'fr' ? 'Retirer ' : 'Remove ') + annotLabel(kind);
   btn.onclick = () => { removeAnnotation(rec); map.closePopup(); };
   marker.bindPopup(btn);
   annotations.push(rec);
@@ -1538,17 +1585,39 @@ function nearestOnPoly(p, poly) {
   return best;
 }
 
-function equipLine(pLL, cXY, ref, dist, color, viol) {
-  const line = L.polyline([pLL, xyToLL(cXY, ref)], {
+// connector line plus a draggable distance label the user can reposition
+function equipConnector(rec, which, pLL, cXY, ref, dist, color, viol) {
+  const toLL = xyToLL(cXY, ref);
+  const line = L.polyline([pLL, toLL], {
     color: color, weight: Math.max(1, lineWeight - 1), dashArray: '4 3'
   }).addTo(map);
-  line.bindTooltip(fmtM(dist) + ' m', { permanent: true, direction: 'center', className: 'dist-tip equip' + (viol ? ' viol' : '') }).openTooltip();
   equipDistLayers.push(line);
+  const midLL = L.latLng((pLL.lat + toLL.lat) / 2, (pLL.lng + toLL.lng) / 2);
+  const midPt = map.latLngToLayerPoint(midLL);
+  const off = rec.labelOff && rec.labelOff[which];
+  const labelLL = off ? map.layerPointToLatLng(midPt.add([off.x, off.y])) : midLL;
+  const cls = 'dist-label-eq' + (which === 'lot' ? ' lot' : '') + (viol ? ' viol' : '');
+  const m = L.marker(labelLL, {
+    draggable: true,
+    icon: L.divIcon({ className: '', html: '<div class="' + cls + '">' + fmtM(dist) + ' m</div>', iconSize: [0, 0], iconAnchor: [0, 0] })
+  }).addTo(map);
+  m.on('drag', () => {
+    const mp = map.latLngToLayerPoint(midLL);
+    const lp = map.latLngToLayerPoint(m.getLatLng());
+    if (!rec.labelOff) rec.labelOff = {};
+    rec.labelOff[which] = { x: lp.x - mp.x, y: lp.y - mp.y };
+  });
+  m.on('dragend', saveAnnotations);
+  m._exportText = fmtM(dist) + ' m';
+  m._exportColor = color;
+  equipLabelMarkers.push(m);
 }
 
 function refreshEquip() {
   equipDistLayers.forEach(l => map.removeLayer(l));
   equipDistLayers = [];
+  equipLabelMarkers.forEach(l => map.removeLayer(l));
+  equipLabelMarkers = [];
   const info = document.getElementById('equipInfo');
   if (!poolPoly) { info.style.display = 'none'; return; }
   const ref = center;
@@ -1567,16 +1636,16 @@ function refreshEquip() {
     if (!bp.c) return;
     const poolViol = bp.d < EQUIP_MIN_M;
     if (poolViol) anyViol = true;
-    equipLine(pLL, bp.c, ref, bp.d, poolViol ? '#c0392b' : '#1c2733', poolViol);
-    let row = ANNOT[rec.kind].label + ': pool ' + fmtM(bp.d) + ' m' + (poolViol ? ' (under ' + EQUIP_MIN_M + ' m)' : '');
+    equipConnector(rec, 'pool', pLL, bp.c, ref, bp.d, poolViol ? '#c0392b' : '#1c2733', poolViol);
+    let row = annotLabel(rec.kind) + ': ' + t('wPool') + ' ' + fmtM(bp.d) + ' m' + (poolViol ? ' (< ' + EQUIP_MIN_M + ' m)' : '');
     // distance to the nearest property line (equipment must also meet the property setback)
     if (lot) {
       const bl = nearestOnPoly(p, lot);
       if (bl.c) {
         const lotViol = bl.d < bufLot;
         if (lotViol) anyViol = true;
-        equipLine(pLL, bl.c, ref, bl.d, lotViol ? '#c0392b' : '#2e7d32', lotViol);
-        row += ', lot line ' + fmtM(bl.d) + ' m' + (lotViol ? ' (under ' + fmtBuf(bufLot) + ' m)' : '');
+        equipConnector(rec, 'lot', pLL, bl.c, ref, bl.d, lotViol ? '#c0392b' : '#2e7d32', lotViol);
+        row += ', ' + t('wLot') + ' ' + fmtM(bl.d) + ' m' + (lotViol ? ' (< ' + fmtBuf(bufLot) + ' m)' : '');
       }
     }
     rows.push(row);
@@ -1595,7 +1664,7 @@ function saveAnnotations() {
   if (!annotations.length) return;
   store[lotKey(annotAnchor())] = annotations.map(r => {
     const l = r.marker.getLatLng();
-    return { kind: r.kind, lat: l.lat, lng: l.lng };
+    return { kind: r.kind, lat: l.lat, lng: l.lng, labelOff: r.labelOff || {} };
   });
   localStorage.setItem('annots', JSON.stringify(store));
 }
@@ -1611,7 +1680,7 @@ function restoreAnnotations() {
     if (d < bestD) { bestD = d; best = k; }
   }
   if (best && bestD < 300) {
-    store[best].forEach(a => addAnnotation(a.kind, L.latLng(a.lat, a.lng)));
+    store[best].forEach(a => addAnnotation(a.kind, L.latLng(a.lat, a.lng), a.labelOff));
   }
 }
 
@@ -1752,6 +1821,15 @@ function toggleInfoBox() {
   updateInfoBox();
 }
 
+function toggleLang() {
+  lang = lang === 'en' ? 'fr' : 'en';
+  document.getElementById('langBtn').textContent = lang === 'en' ? 'FR' : 'EN';
+  annotations.forEach(rec => rec.marker.setIcon(annotIcon(rec.kind)));
+  refreshEquip();
+  updateInfoBox();
+  saveSession();
+}
+
 function updateInfoBox() {
   const box = document.getElementById('infoBox');
   if (!document.body.classList.contains('clean') && !document.body.classList.contains('showinfo')) {
@@ -1763,29 +1841,29 @@ function updateInfoBox() {
   const lFt = parseFloat(document.getElementById('lFt').value) || 0;
   const bufLot = parseFloat(document.getElementById('bufLot').value);
   const bufStruct = parseFloat(document.getElementById('bufStruct').value);
-  const shapeName = shape === 'rect' ? 'Rectangle' : (shape === 'round' ? 'Round' : 'Oval');
+  const shapeName = shape === 'rect' ? 'Rectangle' : (shape === 'round' ? (lang === 'fr' ? 'Ronde' : 'Round') : (lang === 'fr' ? 'Ovale' : 'Oval'));
   const footFt2 = poolFootprintFt2();
   const footM2 = footFt2 * FT * FT;
-  let html = '<h2>Pool plan summary</h2>';
-  html += '<b>Pool:</b> ' + shapeName + ' ' + fmt(wFt) + (shape === 'round' ? '' : ' x ' + fmt(lFt)) + ' ft (' +
+  let html = '<h2>' + t('summary') + '</h2>';
+  html += '<b>' + t('pool') + ':</b> ' + shapeName + ' ' + fmt(wFt) + (shape === 'round' ? '' : ' x ' + fmt(lFt)) + ' ft (' +
     (wFt * FT).toFixed(2) + (shape === 'round' ? '' : ' x ' + (lFt * FT).toFixed(2)) + ' m)<br>';
-  html += '<b>Water area:</b> ' + Math.round(footFt2) + ' ft&sup2; (' + footM2.toFixed(1) + ' m&sup2;)<br>';
+  html += '<b>' + t('water') + ':</b> ' + Math.round(footFt2) + ' ft&sup2; (' + footM2.toFixed(1) + ' m&sup2;)<br>';
   if (lotPts && lotPts.length >= 3) {
     const lotM2 = polygonAreaM2(lotPts);
     const pct = lotM2 ? (footM2 / lotM2 * 100) : 0;
     const over = pct > MAX_COVERAGE_PCT;
-    html += '<b>Lot area:</b> ' + lotM2.toFixed(1) + ' m&sup2; &middot; <span class="' + (over ? 'warn' : '') + '">' +
-      pct.toFixed(1) + '% pool' + (over ? ' (over ' + MAX_COVERAGE_PCT + '%)' : '') + '</span><br>';
+    html += '<b>' + t('lotArea') + ':</b> ' + lotM2.toFixed(1) + ' m&sup2; &middot; <span class="' + (over ? 'warn' : '') + '">' +
+      pct.toFixed(1) + '% ' + t('covPool') + (over ? ' (' + t('over') + ' ' + MAX_COVERAGE_PCT + '%)' : '') + '</span><br>';
     if (lotNearest.length) {
       const lens = lotNearest.map(r => Math.hypot(r.fromXY.x - r.toXY.x, r.fromXY.y - r.toXY.y));
       const minD = Math.min.apply(null, lens);
-      html += '<b>Lot lines (min ' + fmtBuf(bufLot) + ' m):</b> <span class="' + (minD < bufLot ? 'warn' : '') + '">' +
+      html += '<b>' + t('lotLines') + ' (' + t('min') + ' ' + fmtBuf(bufLot) + ' m):</b> <span class="' + (minD < bufLot ? 'warn' : '') + '">' +
         lens.map(d => fmtM(d) + ' m').join(', ') + '</span><br>';
     }
   }
   if (structures.length) {
     const d = poolStructMinDistance();
-    if (d != null) html += '<b>Nearest structure (min ' + fmtBuf(bufStruct) + ' m):</b> <span class="' +
+    if (d != null) html += '<b>' + t('nearStruct') + ' (' + t('min') + ' ' + fmtBuf(bufStruct) + ' m):</b> <span class="' +
       (d < bufStruct ? 'warn' : '') + '">' + fmtM(d) + ' m</span><br>';
   }
   const eq = annotations.filter(r => ANNOT[r.kind].measured);
@@ -1798,18 +1876,18 @@ function updateInfoBox() {
       const p = llToXY(rec.marker.getLatLng(), ref);
       const pd = nearestOnPoly(p, pool).d;
       if (pd < EQUIP_MIN_M) anyV = true;
-      let s = ANNOT[rec.kind].label + ' ' + fmtM(pd) + ' m pool';
+      let s = annotLabel(rec.kind) + ' ' + fmtM(pd) + ' m ' + t('wPool');
       if (lot) {
         const ld = nearestOnPoly(p, lot).d;
         if (ld < bufLot) anyV = true;
-        s += ' / ' + fmtM(ld) + ' m lot';
+        s += ' / ' + fmtM(ld) + ' m ' + t('wLot');
       }
       return s;
     });
-    html += '<b>Equipment (pool ' + EQUIP_MIN_M + ' m' + (lot ? ', lot ' + fmtBuf(bufLot) + ' m' : '') + '):</b> <span class="' + (anyV ? 'warn' : '') + '">' + parts.join('; ') + '</span><br>';
+    html += '<b>' + t('equipment') + ' (' + t('wPool') + ' ' + EQUIP_MIN_M + ' m' + (lot ? ', ' + t('wLot') + ' ' + fmtBuf(bufLot) + ' m' : '') + '):</b> <span class="' + (anyV ? 'warn' : '') + '">' + parts.join('; ') + '</span><br>';
   }
   const sf = annotations.filter(r => ANNOT[r.kind].cls === 'sf');
-  if (sf.length) html += '<b>Safety access:</b> ' + sf.map(r => ANNOT[r.kind].label).join(', ');
+  if (sf.length) html += '<b>' + t('safety') + ':</b> ' + sf.map(r => annotLabel(r.kind)).join(', ');
   box.innerHTML = html;
   box.style.display = 'block';
 }
@@ -1829,6 +1907,7 @@ function saveSessionNow() {
       bufStruct: document.getElementById('bufStruct').value,
       lineW: lineWeight,
       labelSz: labelSize,
+      lang: lang,
       whiteBack: Math.round(planWhiteBack * 100)
     }));
   } catch (e) { /* ignore quota */ }
@@ -1855,6 +1934,10 @@ function restoreSession() {
     document.getElementById('labelSz').value = labelSize;
     document.getElementById('labelSzVal').textContent = labelSize;
     document.documentElement.style.setProperty('--label-size', labelSize + 'px');
+  }
+  if (s.lang) {
+    lang = s.lang === 'fr' ? 'fr' : 'en';
+    document.getElementById('langBtn').textContent = lang === 'en' ? 'FR' : 'EN';
   }
   if (s.whiteBack != null) {
     document.getElementById('planWhite').value = s.whiteBack;
