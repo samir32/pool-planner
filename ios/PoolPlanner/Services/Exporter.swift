@@ -97,6 +97,11 @@ enum Exporter {
             let color = scene.lotViolating ? Palette.warn : Palette.lot
             strokePolygon(scene.lot, stroke: color, fill: color.withAlphaComponent(0.05))
         }
+        for (i, z) in scene.zones.enumerated() where z.points.count >= 3 {
+            let viol = scene.zoneViolating.indices.contains(i) && scene.zoneViolating[i]
+            let color = viol ? Palette.warn : Palette.zone
+            strokePolygon(z.points, stroke: color, fill: color.withAlphaComponent(0.12))
+        }
         for (i, s) in scene.structures.enumerated() where s.count >= 3 {
             let viol = scene.structureViolating.indices.contains(i) && scene.structureViolating[i]
             strokePolygon(
@@ -118,6 +123,7 @@ enum Exporter {
                 case .lot, .equipmentToLot: color = Palette.lot
                 case .structure: color = Palette.structStroke
                 case .equipmentToPool: color = Palette.ink
+                case .zone: color = Palette.zone
                 }
             }
             let path = UIBezierPath()
@@ -257,6 +263,16 @@ enum Exporter {
                     pass: !report.equipment.contains(where: \.poolViolation)
                 ))
             }
+        }
+        for (i, gap) in report.zoneGaps.enumerated() {
+            guard let d = gap?.d else { continue }
+            let viol = report.zoneViolations.indices.contains(i) && report.zoneViolations[i]
+            let zone = input.scene.zones.indices.contains(i) ? input.scene.zones[i] : nil
+            let limit = zone?.setbackM.map { " ≥ \(f.distance($0))" } ?? ""
+            lines.append(SummaryLine(
+                text: "Zone \(i + 1) clearance\(limit) — nearest \(f.distance(d))",
+                pass: !viol
+            ))
         }
         if let maxPct = rules.maxLotCoveragePct, let pct = report.coveragePct {
             lines.append(SummaryLine(

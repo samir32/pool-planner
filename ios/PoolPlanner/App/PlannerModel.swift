@@ -42,6 +42,7 @@ final class PlannerModel: NSObject, ObservableObject {
         case none
         case lot
         case structure
+        case zone
     }
 
     @Published var poolCenter: LatLng?
@@ -76,6 +77,19 @@ final class PlannerModel: NSObject, ObservableObject {
     @Published var measurePoints: [LatLng] = []
     @Published var measureSnapped: [Bool] = []
     @Published var scenarios: [Scenario] = []
+
+    // Phase 6: zones, undo, view options, custom tiles
+    @Published var zones: [BoundaryZone] = []
+    /// Hide editing handles for a presentation-clean map.
+    @Published var cleanView = false
+    /// Optional XYZ tile template ({z}/{x}/{y}) replacing Apple imagery —
+    /// the web app's escape hatch for areas with stale satellite photos.
+    @Published var customTileTemplate: String?
+
+    private var undoStack: [ProjectState] = []
+    private var redoStack: [ProjectState] = []
+    var canUndo: Bool { !undoStack.isEmpty }
+    var canRedo: Bool { !redoStack.isEmpty }
 
     // Phase 5: site plan + export
     @Published var sitePlan: SitePlanParams?
@@ -115,8 +129,30 @@ final class PlannerModel: NSObject, ObservableObject {
         ProjectState(
             poolCenter: poolCenter, shape: shape, widthFt: widthFt, lengthFt: lengthFt,
             rotationDeg: rotationDeg, units: units, lot: lot, structures: structures,
-            pins: pins, rules: rules, scenarios: scenarios, sitePlan: sitePlan
+            pins: pins, rules: rules, scenarios: scenarios, sitePlan: sitePlan,
+            zones: zones, customTileTemplate: customTileTemplate
         )
+    }
+
+    // MARK: - Undo / redo
+
+    /// Snapshot the current state before a discrete mutation.
+    func recordUndo() {
+        undoStack.append(projectState)
+        if undoStack.count > 50 { undoStack.removeFirst() }
+        redoStack.removeAll()
+    }
+
+    func undo() {
+        guard let state = undoStack.popLast() else { return }
+        redoStack.append(projectState)
+        apply(state: state)
+    }
+
+    func redo() {
+        guard let state = redoStack.popLast() else { return }
+        undoStack.append(projectState)
+        apply(state: state)
     }
 
     private func apply(state: ProjectState) {
@@ -132,7 +168,9 @@ final class PlannerModel: NSObject, ObservableObject {
         rules = state.rules
         scenarios = state.scenarios
         sitePlan = state.sitePlan
-        if state.sitePlan != nil, let data = store.loadSitePlanImage() {
+        zones = state.zones ?? []
+        customTileTemplate = state.customTileTemplate
+        if state.sitePlan != nil, sitePlanImage == nil, let data = store.loadSitePlanImage() {
             sitePlanImage = UIImage(data: data)
         }
         if sitePlanImage == nil { sitePlan = nil }
@@ -152,6 +190,7 @@ final class PlannerModel: NSObject, ObservableObject {
             exportError = "Couldn't read that file."
             return
         }
+        recordUndo()
         sitePlanImage = image
         let center = poolCenter ?? visibleRegion.map {
             LatLng(lat: $0.center.latitude, lng: $0.center.longitude)
@@ -161,13 +200,15 @@ final class PlannerModel: NSObject, ObservableObject {
     }
 
     func removeSitePlan() {
+        recordUndo()
         sitePlan = nil
-        sitePlanImage = nil
-        store.saveSitePlanImage(nil)
+        // Keep the image file and in-memory image so undo can bring it back;
+        // the next import overwrites the file.
     }
 
     func centerSitePlanAtMapCenter() {
         guard var params = sitePlan, let region = visibleRegion else { return }
+        recordUndo()
         params.center = LatLng(lat: region.center.latitude, lng: region.center.longitude)
         sitePlan = params
     }
@@ -290,7 +331,8 @@ final class PlannerModel: NSObject, ObservableObject {
             poolFootprintM2: footprintM2,
             lot: lot.count >= 3 ? lot : nil,
             structures: structures,
-            equipment: measuredPins.map(\.position)
+            equipment: measuredPins.map(\.position),
+            zones: zones.map { ($0.points, $0.setbackM) }
         )
         return ComplianceEngine.evaluate(site: site, rules: rules)
     }
@@ -307,6 +349,7 @@ final class PlannerModel: NSObject, ObservableObject {
         let dx = c.from.x - c.to.x, dy = c.from.y - c.to.y
         let len = (dx * dx + dy * dy).squareRoot()
         guard len > 0 else { return }
+        recordUndo()
         let t = target - len
         poolCenter = Geo.xyToLL(XY(x: t * dx / len, y: t * dy / len), ref: ref)
     }
@@ -329,9 +372,11 @@ final class PlannerModel: NSObject, ObservableObject {
 
     func finishDraw() {
         if draftPoints.count >= 3 {
+            recordUndo()
             switch drawMode {
             case .lot: lot = draftPoints
             case .structure: structures.append(draftPoints)
+            case .zone: zones.append(BoundaryZone(points: draftPoints))
             case .none: break
             }
         }
@@ -344,10 +389,20 @@ final class PlannerModel: NSObject, ObservableObject {
         draftPoints = []
     }
 
-    func clearLot() { lot = [] }
+    func clearLot() {
+        recordUndo()
+        lot = []
+    }
 
     func removeLastStructure() {
-        if !structures.isEmpty { structures.removeLast() }
+        guard !structures.isEmpty else { return }
+        recordUndo()
+        structures.removeLast()
+    }
+
+    func removeZone(id: UUID) {
+        recordUndo()
+        zones.removeAll { $0.id == id }
     }
 
     // MARK: - Pins
@@ -361,15 +416,18 @@ final class PlannerModel: NSObject, ObservableObject {
     }
 
     func addPin(_ kind: PinKind, at p: LatLng) {
+        recordUndo()
         pins.append(PlacedPin(kind: kind, position: p))
     }
 
     func movePin(id: UUID, to p: LatLng) {
         guard let i = pins.firstIndex(where: { $0.id == id }) else { return }
+        recordUndo()
         pins[i].position = p
     }
 
     func removePin(id: UUID) {
+        recordUndo()
         pins.removeAll { $0.id == id }
     }
 
@@ -408,6 +466,7 @@ final class PlannerModel: NSObject, ObservableObject {
     func saveScenario(named name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
+        recordUndo()
         let scenario = Scenario(
             name: trimmed, shape: shape, widthFt: widthFt, lengthFt: lengthFt,
             rotationDeg: rotationDeg, center: poolCenter, rules: rules
@@ -421,6 +480,7 @@ final class PlannerModel: NSObject, ObservableObject {
     }
 
     func loadScenario(_ scenario: Scenario) {
+        recordUndo()
         shape = scenario.shape
         widthFt = scenario.widthFt
         lengthFt = scenario.lengthFt
@@ -433,6 +493,7 @@ final class PlannerModel: NSObject, ObservableObject {
     }
 
     func removeScenario(id: UUID) {
+        recordUndo()
         scenarios.removeAll { $0.id == id }
     }
 
@@ -440,12 +501,24 @@ final class PlannerModel: NSObject, ObservableObject {
         switch kind {
         case .lot:
             guard lot.indices.contains(vertexIndex) else { return }
+            recordUndo()
             lot[vertexIndex] = p
         case .structure:
             guard structures.indices.contains(polygonIndex),
                   structures[polygonIndex].indices.contains(vertexIndex) else { return }
+            recordUndo()
             structures[polygonIndex][vertexIndex] = p
+        case .zone:
+            guard zones.indices.contains(polygonIndex),
+                  zones[polygonIndex].points.indices.contains(vertexIndex) else { return }
+            recordUndo()
+            zones[polygonIndex].points[vertexIndex] = p
         }
+    }
+
+    func setPoolCenter(_ p: LatLng) {
+        recordUndo()
+        poolCenter = p
     }
 
     func apply(_ preset: PoolPreset) {

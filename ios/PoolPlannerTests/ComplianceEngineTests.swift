@@ -75,6 +75,32 @@ final class ComplianceEngineTests: XCTestCase {
         XCTAssertTrue(report.lotSetbackViolation)
     }
 
+    func testBoundaryZones() {
+        var site = makeSite()
+        let center = site.poolCenter
+        // zone 4 m east of the pool wall (pool wall at x=2, zone from x=6..8)
+        func c(_ dx: Double, _ dy: Double) -> LatLng { Geo.offset(center, dx: dx, dy: dy) }
+        let zone = [c(6, -2), c(8, -2), c(8, 2), c(6, 2)]
+
+        // gap = 4 m: fine without a setback, violated with a 5 m setback
+        site.zones = [(points: zone, setbackM: nil)]
+        var report = ComplianceEngine.evaluate(site: site, rules: RuleProfile(name: "t"))
+        XCTAssertEqual(report.zoneGaps[0]!.d, 4.0, accuracy: 1e-9)
+        XCTAssertEqual(report.zoneViolations, [false])
+        XCTAssertFalse(report.hasViolation && report.zoneViolations[0])
+
+        site.zones = [(points: zone, setbackM: 5.0)]
+        report = ComplianceEngine.evaluate(site: site, rules: RuleProfile(name: "t"))
+        XCTAssertEqual(report.zoneViolations, [true])
+        XCTAssertTrue(report.hasViolation)
+
+        // pool center inside the zone is always a violation
+        let bigZone = [c(-20, -20), c(20, -20), c(20, 20), c(-20, 20)]
+        site.zones = [(points: bigZone, setbackM: nil)]
+        report = ComplianceEngine.evaluate(site: site, rules: RuleProfile(name: "t"))
+        XCTAssertEqual(report.zoneViolations, [true])
+    }
+
     func testEquipmentLotRuleOverridesPropertySetback() {
         let site = makeSite() // equipment sits 2.5 m from lot edge
         // property setback 3 m would flag it…

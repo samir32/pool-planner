@@ -10,10 +10,13 @@ public struct SiteGeometry: Sendable {
     public var lot: [LatLng]?
     public var structures: [[LatLng]]
     public var equipment: [LatLng]
+    /// Extra restriction polygons, each with an optional own setback.
+    public var zones: [(points: [LatLng], setbackM: Double?)]
 
     public init(
         poolCenter: LatLng, poolRing: [LatLng], poolFootprintM2: Double,
-        lot: [LatLng]? = nil, structures: [[LatLng]] = [], equipment: [LatLng] = []
+        lot: [LatLng]? = nil, structures: [[LatLng]] = [], equipment: [LatLng] = [],
+        zones: [(points: [LatLng], setbackM: Double?)] = []
     ) {
         self.poolCenter = poolCenter
         self.poolRing = poolRing
@@ -21,6 +24,7 @@ public struct SiteGeometry: Sendable {
         self.lot = lot
         self.structures = structures
         self.equipment = equipment
+        self.zones = zones
     }
 }
 
@@ -58,6 +62,11 @@ public struct ComplianceReport: Sendable {
     public var structureGaps: [Connector?]
     public var structureSetbackViolation: Bool
     public var equipment: [EquipmentCheck]
+    /// Shortest pool-to-zone connector per zone, same order as input.
+    public var zoneGaps: [Connector?]
+    /// Per zone: violated when the pool center sits inside it, or the gap is
+    /// under the zone's own setback.
+    public var zoneViolations: [Bool]
     public var lotAreaM2: Double?
     public var coveragePct: Double?
     public var coverageViolation: Bool
@@ -66,6 +75,7 @@ public struct ComplianceReport: Sendable {
         lotSetbackViolation || structureSetbackViolation || coverageViolation
             || (poolCenterInsideLot == false)
             || equipment.contains { $0.poolViolation || $0.lotViolation }
+            || zoneViolations.contains(true)
     }
 }
 
@@ -150,6 +160,31 @@ public enum ComplianceEngine {
             ))
         }
 
+        // --- boundary zones (easements etc.) ---
+        var zoneGaps: [Connector?] = []
+        var zoneViolations: [Bool] = []
+        for zone in site.zones {
+            guard zone.points.count >= 3 else {
+                zoneGaps.append(nil)
+                zoneViolations.append(false)
+                continue
+            }
+            let poly = zone.points.map { Geo.llToXY($0, ref: ref) }
+            var best: Connector?
+            for p in pool {
+                for i in 0..<poly.count {
+                    let r = Geo.closestPtSeg(p, poly[i], poly[(i + 1) % poly.count])
+                    if best == nil || r.d < best!.d {
+                        best = Connector(d: r.d, from: p, to: r.c)
+                    }
+                }
+            }
+            zoneGaps.append(best)
+            let centerInside = Geo.pointInPoly(XY(x: 0, y: 0), poly)
+            let underSetback = zone.setbackM.map { (best?.d ?? .infinity) < $0 } ?? false
+            zoneViolations.append(centerInside || underSetback)
+        }
+
         // --- lot coverage ---
         var lotArea: Double?
         var coveragePct: Double?
@@ -172,6 +207,8 @@ public enum ComplianceEngine {
             structureGaps: structureGaps,
             structureSetbackViolation: structViolation,
             equipment: equipment,
+            zoneGaps: zoneGaps,
+            zoneViolations: zoneViolations,
             lotAreaM2: lotArea,
             coveragePct: coveragePct,
             coverageViolation: coverageViolation

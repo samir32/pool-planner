@@ -7,7 +7,7 @@ import MapKit
 /// diffs this value and rebuilds overlays/annotations only when it changes.
 struct MapScene: Equatable {
     enum ConnectorKind: Equatable {
-        case lot, structure, equipmentToPool, equipmentToLot
+        case lot, structure, equipmentToPool, equipmentToLot, zone
     }
 
     struct Connector: Equatable {
@@ -31,6 +31,10 @@ struct MapScene: Equatable {
     var measureSnapped: [Bool]
     var displayUnits: UnitSystem
     var sitePlan: SitePlanParams?
+    var zones: [BoundaryZone]
+    var zoneViolating: [Bool]
+    var cleanView: Bool
+    var tileTemplate: String?
 }
 
 extension PlannerModel {
@@ -39,6 +43,7 @@ extension PlannerModel {
         var connectors: [MapScene.Connector] = []
         var lotViolating = false
         var structureViolating = structures.map { _ in false }
+        var zoneViolating = zones.map { _ in false }
 
         if let report {
             let ref = report.ref
@@ -63,6 +68,17 @@ extension PlannerModel {
                     from: Geo.xyToLL(c.from, ref: ref),
                     to: Geo.xyToLL(c.to, ref: ref),
                     distM: c.d, violating: viol, kind: .structure
+                ))
+            }
+            zoneViolating = report.zoneViolations
+            for (i, gap) in report.zoneGaps.enumerated() {
+                guard let c = gap else { continue }
+                connectors.append(MapScene.Connector(
+                    from: Geo.xyToLL(c.from, ref: ref),
+                    to: Geo.xyToLL(c.to, ref: ref),
+                    distM: c.d,
+                    violating: report.zoneViolations.indices.contains(i) && report.zoneViolations[i],
+                    kind: .zone
                 ))
             }
             // Equipment connectors (web refreshEquip): pin → nearest pool wall
@@ -105,7 +121,11 @@ extension PlannerModel {
             measurePoints: measurePoints,
             measureSnapped: measureSnapped,
             displayUnits: units,
-            sitePlan: sitePlan
+            sitePlan: sitePlan,
+            zones: zones,
+            zoneViolating: zoneViolating,
+            cleanView: cleanView,
+            tileTemplate: customTileTemplate
         )
     }
 }
@@ -114,7 +134,7 @@ extension PlannerModel {
 
 /// Draggable corner handle of the lot or a structure.
 final class VertexAnnotation: NSObject, MKAnnotation {
-    enum Kind { case lot, structure }
+    enum Kind { case lot, structure, zone }
     let kind: Kind
     let polygonIndex: Int
     let vertexIndex: Int
@@ -182,6 +202,7 @@ enum Palette {
     static let structFill = UIColor(red: 0x7B / 255, green: 0x4B / 255, blue: 0xC9 / 255, alpha: 1)
     static let warn = UIColor(red: 0xC0 / 255, green: 0x39 / 255, blue: 0x2B / 255, alpha: 1)
     static let ink = UIColor(red: 0x1C / 255, green: 0x27 / 255, blue: 0x33 / 255, alpha: 1)
+    static let zone = UIColor(red: 0xD9 / 255, green: 0x82 / 255, blue: 0x2B / 255, alpha: 1)
     static let measure = UIColor(red: 0xFF / 255, green: 0xE4 / 255, blue: 0x5C / 255, alpha: 1)
     static let snap = UIColor(red: 0xE8 / 255, green: 0x59 / 255, blue: 0x0C / 255, alpha: 1)
 }
@@ -278,9 +299,9 @@ struct PoolMapView: UIViewRepresentable {
 
         @objc private func handleDoubleTap(_ g: UITapGestureRecognizer) {
             guard g.state == .ended, let map = g.view as? MKMapView else { return }
-            guard model.drawMode == .none else { return }
+            guard model.drawMode == .none, !model.measureMode else { return }
             let coord = map.convert(g.location(in: map), toCoordinateFrom: map)
-            model.poolCenter = LatLng(lat: coord.latitude, lng: coord.longitude)
+            model.setPoolCenter(LatLng(lat: coord.latitude, lng: coord.longitude))
         }
 
         @objc private func handleSingleTap(_ g: UITapGestureRecognizer) {
@@ -324,8 +345,18 @@ struct PoolMapView: UIViewRepresentable {
                     consider(Geo.xyToLL(r.c, ref: ll))
                 }
             }
+            for zone in model.zones where zone.points.count >= 3 {
+                let xy = zone.points.map { Geo.llToXY($0, ref: ll) }
+                for i in 0..<xy.count {
+                    let r = Geo.closestPtSeg(XY(x: 0, y: 0), xy[i], xy[(i + 1) % xy.count])
+                    consider(Geo.xyToLL(r.c, ref: ll))
+                }
+            }
             for pin in model.pins { consider(pin.position) }
-            if let best { return (best, true) }
+            if let best {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                return (best, true)
+            }
             return (ll, false)
         }
 
@@ -388,7 +419,7 @@ struct PoolMapView: UIViewRepresentable {
                 lastPlaceToken = token
                 let c = map.centerCoordinate
                 DispatchQueue.main.async {
-                    self.model.poolCenter = LatLng(lat: c.latitude, lng: c.longitude)
+                    self.model.setPoolCenter(LatLng(lat: c.latitude, lng: c.longitude))
                 }
             }
             if let kind = model.pendingPinKind {
@@ -398,6 +429,7 @@ struct PoolMapView: UIViewRepresentable {
                     self.model.addPin(kind, at: LatLng(lat: c.latitude, lng: c.longitude))
                 }
             }
+            syncTileOverlay(map: map)
             if let req = model.cameraRequest, req.id != lastCameraID {
                 lastCameraID = req.id
                 let region = MKCoordinateRegion(
@@ -438,22 +470,28 @@ struct PoolMapView: UIViewRepresentable {
                 sceneOverlays.append(SitePlanOverlay(params: params, image: image))
             }
             if let ring = scene.poolRing { addPolygon(ring, title: "pool") }
-            if scene.lot.count >= 3 {
-                addPolygon(scene.lot, title: scene.lotViolating ? "lotViol" : "lot")
-                for (i, p) in scene.lot.enumerated() {
+            func addVertices(_ ring: [LatLng], kind: VertexAnnotation.Kind, polygonIndex: Int) {
+                guard !scene.cleanView else { return }
+                for (i, p) in ring.enumerated() {
                     sceneAnnotations.append(VertexAnnotation(
-                        kind: .lot, polygonIndex: 0, vertexIndex: i,
+                        kind: kind, polygonIndex: polygonIndex, vertexIndex: i,
                         coordinate: CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng)))
                 }
+            }
+
+            if scene.lot.count >= 3 {
+                addPolygon(scene.lot, title: scene.lotViolating ? "lotViol" : "lot")
+                addVertices(scene.lot, kind: .lot, polygonIndex: 0)
             }
             for (si, s) in scene.structures.enumerated() where s.count >= 3 {
                 let viol = scene.structureViolating.indices.contains(si) && scene.structureViolating[si]
                 addPolygon(s, title: viol ? "structViol" : "struct")
-                for (i, p) in s.enumerated() {
-                    sceneAnnotations.append(VertexAnnotation(
-                        kind: .structure, polygonIndex: si, vertexIndex: i,
-                        coordinate: CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng)))
-                }
+                addVertices(s, kind: .structure, polygonIndex: si)
+            }
+            for (zi, z) in scene.zones.enumerated() where z.points.count >= 3 {
+                let viol = scene.zoneViolating.indices.contains(zi) && scene.zoneViolating[zi]
+                addPolygon(z.points, title: viol ? "zoneViol" : "zone")
+                addVertices(z.points, kind: .zone, polygonIndex: zi)
             }
             if scene.drawing, !scene.draft.isEmpty {
                 if scene.draft.count > 1 { addPolyline(scene.draft, title: "draft") }
@@ -472,6 +510,7 @@ struct PoolMapView: UIViewRepresentable {
                     case .lot, .equipmentToLot: title = "connLot"
                     case .structure: title = "connStruct"
                     case .equipmentToPool: title = "connEquip"
+                    case .zone: title = "connZone"
                     }
                 }
                 addPolyline([c.from, c.to], title: title)
@@ -503,8 +542,28 @@ struct PoolMapView: UIViewRepresentable {
             map.addAnnotations(sceneAnnotations)
         }
 
+        private var tileOverlay: MKTileOverlay?
+        private var tileTemplate: String?
+
+        private func syncTileOverlay(map: MKMapView) {
+            let template = model.customTileTemplate?.trimmingCharacters(in: .whitespaces)
+            let normalized = (template?.isEmpty ?? true) ? nil : template
+            guard normalized != tileTemplate else { return }
+            tileTemplate = normalized
+            if let tileOverlay {
+                map.removeOverlay(tileOverlay)
+                self.tileOverlay = nil
+            }
+            if let normalized {
+                let overlay = MKTileOverlay(urlTemplate: normalized)
+                overlay.canReplaceMapContent = true
+                map.insertOverlay(overlay, at: 0, level: .aboveRoads)
+                tileOverlay = overlay
+            }
+        }
+
         private func syncHandle(map: MKMapView) {
-            guard let center = model.poolCenter else {
+            guard let center = model.poolCenter, !model.cleanView else {
                 if handleOnMap {
                     map.removeAnnotation(handleAnnotation)
                     handleOnMap = false
@@ -576,10 +635,15 @@ struct PoolMapView: UIViewRepresentable {
         }
 
         private static func vertexView(for annotation: VertexAnnotation, on map: MKMapView) -> MKAnnotationView {
-            let id = annotation.kind == .lot ? "lotVertex" : "structVertex"
+            let id: String
+            let color: UIColor
+            switch annotation.kind {
+            case .lot: id = "lotVertex"; color = Palette.lot
+            case .structure: id = "structVertex"; color = Palette.structFill
+            case .zone: id = "zoneVertex"; color = Palette.zone
+            }
             let view = dequeue(id, for: annotation, on: map)
             view.isDraggable = true
-            let color = annotation.kind == .lot ? Palette.lot : Palette.structFill
             view.image = circleImage(diameter: 14, pad: 15, fill: .white, core: color)
             return view
         }
@@ -643,6 +707,7 @@ struct PoolMapView: UIViewRepresentable {
                 case .lot, .equipmentToLot: bg = Palette.lot
                 case .structure: bg = Palette.structStroke
                 case .equipmentToPool: bg = Palette.ink
+                case .zone: bg = Palette.zone
                 }
             }
             view.image = UIGraphicsImageRenderer(size: size).image { ctx in
@@ -687,7 +752,7 @@ struct PoolMapView: UIViewRepresentable {
                     } else if let pin = annotation as? PinAnnotation {
                         model.movePin(id: pin.pinID, to: p)
                     } else if annotation === handleAnnotation {
-                        model.poolCenter = p
+                        model.setPoolCenter(p)
                     }
                 default:
                     break
@@ -705,6 +770,9 @@ struct PoolMapView: UIViewRepresentable {
         }
 
         nonisolated func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let tile = overlay as? MKTileOverlay {
+                return MKTileOverlayRenderer(tileOverlay: tile)
+            }
             if let sitePlan = overlay as? SitePlanOverlay {
                 return SitePlanRenderer(overlay: sitePlan)
             }
@@ -727,6 +795,12 @@ struct PoolMapView: UIViewRepresentable {
                 case "structViol":
                     r.strokeColor = Palette.warn
                     r.fillColor = Palette.warn.withAlphaComponent(0.15)
+                case "zone":
+                    r.strokeColor = Palette.zone
+                    r.fillColor = Palette.zone.withAlphaComponent(0.12)
+                case "zoneViol":
+                    r.strokeColor = Palette.warn
+                    r.fillColor = Palette.warn.withAlphaComponent(0.12)
                 default:
                     r.strokeColor = .white
                 }
@@ -750,6 +824,9 @@ struct PoolMapView: UIViewRepresentable {
                     r.lineDashPattern = [6, 4]
                 case "connEquip":
                     r.strokeColor = Palette.ink
+                    r.lineDashPattern = [6, 4]
+                case "connZone":
+                    r.strokeColor = Palette.zone
                     r.lineDashPattern = [6, 4]
                 case "measure":
                     r.strokeColor = Palette.measure

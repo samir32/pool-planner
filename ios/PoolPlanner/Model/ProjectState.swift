@@ -73,6 +73,15 @@ struct Scenario: Codable, Equatable, Identifiable {
     var rules: RuleProfile
 }
 
+/// An extra restriction polygon — easement, septic field, wire corridor —
+/// with an optional setback of its own. Covers most "I didn't know that
+/// restriction existed" cases without special-casing any of them.
+struct BoundaryZone: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var points: [LatLng]
+    var setbackM: Double?
+}
+
 /// Georeferencing parameters for an imported site plan / survey image.
 /// The image itself is stored as a separate file next to project.json.
 struct SitePlanParams: Codable, Equatable {
@@ -100,6 +109,9 @@ struct ProjectState: Codable, Equatable {
     var rules: RuleProfile = .example
     var scenarios: [Scenario] = []
     var sitePlan: SitePlanParams?
+    // Optional so project.json written by older builds still decodes.
+    var zones: [BoundaryZone]?
+    var customTileTemplate: String?
 }
 
 /// Loads/saves the project as JSON in the app's Documents directory.

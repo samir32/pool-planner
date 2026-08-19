@@ -55,8 +55,24 @@ struct SidebarView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Pool Placement Planner")
-                    .font(.headline)
+                HStack {
+                    Text("Pool Placement Planner")
+                        .font(.headline)
+                    Spacer()
+                    Button {
+                        model.undo()
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                    .disabled(!model.canUndo)
+                    Button {
+                        model.redo()
+                    } label: {
+                        Image(systemName: "arrow.uturn.forward")
+                    }
+                    .disabled(!model.canRedo)
+                }
+                .buttonStyle(.bordered)
 
                 searchSection
                 shapeSection
@@ -197,7 +213,7 @@ struct SidebarView: View {
 
     private var unitsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Units", systemImage: "ruler")
+            Label("Units & view", systemImage: "ruler")
                 .font(.subheadline.weight(.semibold))
             Picker("Units", selection: $model.units) {
                 Text("ft / in").tag(UnitSystem.imperial)
@@ -205,6 +221,27 @@ struct SidebarView: View {
                 Text("Mixed").tag(UnitSystem.mixed)
             }
             .pickerStyle(.segmented)
+            Toggle("Clean view (hide handles)", isOn: $model.cleanView)
+                .font(.callout)
+            DisclosureGroup {
+                TextField(
+                    "https://…/{z}/{x}/{y}.png",
+                    text: Binding(
+                        get: { model.customTileTemplate ?? "" },
+                        set: { model.customTileTemplate = $0.isEmpty ? nil : $0 }
+                    )
+                )
+                .textFieldStyle(.roundedBorder)
+                .font(.footnote)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                Text("Replaces Apple imagery where it's stale (e.g. a Mapbox key URL). Leave empty for Apple Maps. Custom tiles don't appear in exports.")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            } label: {
+                Text("Custom tile layer")
+                    .font(.callout)
+            }
         }
     }
 
@@ -222,6 +259,9 @@ struct SidebarView: View {
                     Button("Add structure") {
                         model.beginDraw(.structure)
                     }
+                    Button("Add zone") {
+                        model.beginDraw(.zone)
+                    }
                 }
                 .buttonStyle(.bordered)
                 HStack {
@@ -236,10 +276,9 @@ struct SidebarView: View {
                 }
                 .buttonStyle(.borderless)
                 .font(.footnote)
+                zoneList
             } else {
-                Text(model.drawMode == .lot
-                     ? "Tap the map at each property corner, then Finish."
-                     : "Tap the map at each structure corner, then Finish.")
+                Text(drawModeHint)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 HStack {
@@ -248,6 +287,61 @@ struct SidebarView: View {
                         .disabled(model.draftPoints.count < 3)
                     Button("Cancel") { model.cancelDraw() }
                         .buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+
+    private var drawModeHint: String {
+        switch model.drawMode {
+        case .lot: return "Tap the map at each property corner, then Finish."
+        case .structure: return "Tap the map at each structure corner, then Finish."
+        case .zone: return "Tap the map around the easement/zone, then Finish."
+        case .none: return ""
+        }
+    }
+
+    @ViewBuilder
+    private var zoneList: some View {
+        ForEach(Array(model.zones.enumerated()), id: \.element.id) { i, zone in
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Circle()
+                        .fill(Color(red: 0xD9 / 255, green: 0x82 / 255, blue: 0x2B / 255))
+                        .frame(width: 10, height: 10)
+                    Text("Zone \(i + 1)")
+                    Spacer()
+                    Toggle("Setback", isOn: Binding(
+                        get: { zone.setbackM != nil },
+                        set: { on in
+                            model.recordUndo()
+                            model.zones[i].setbackM = on ? 1.5 : nil
+                        }
+                    ))
+                    .labelsHidden()
+                    Button {
+                        model.removeZone(id: zone.id)
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .buttonStyle(.borderless)
+                    .tint(.red)
+                }
+                .font(.callout)
+                if let setback = zone.setbackM {
+                    HStack {
+                        Slider(
+                            value: Binding(
+                                get: { setback },
+                                set: { model.zones[i].setbackM = $0 }
+                            ),
+                            in: 0...10, step: 0.05
+                        )
+                        Text(model.formatter.distance(setback))
+                            .font(.footnote)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
@@ -653,6 +747,15 @@ struct SidebarView: View {
                     .foregroundStyle(viol ? .red : .primary)
             }
         }
+        if !model.zones.isEmpty {
+            ForEach(Array(model.zones.enumerated()), id: \.element.id) { i, _ in
+                if report.zoneGaps.indices.contains(i), let gap = report.zoneGaps[i] {
+                    let viol = report.zoneViolations.indices.contains(i) && report.zoneViolations[i]
+                    Text("Zone \(i + 1): \(f.distance(gap.d))")
+                        .foregroundStyle(viol ? .red : .primary)
+                }
+            }
+        }
         let measuredPins = model.measuredPins
         if !measuredPins.isEmpty {
             Divider()
@@ -661,7 +764,7 @@ struct SidebarView: View {
                     .foregroundStyle(check.poolViolation || check.lotViolation ? .red : .primary)
             }
         }
-        if model.lot.count >= 3 || !model.structures.isEmpty || !measuredPins.isEmpty {
+        if model.lot.count >= 3 || !model.structures.isEmpty || !measuredPins.isEmpty || !model.zones.isEmpty {
             Text(report.hasViolation ? "⚠ Setback violations" : "✓ All enabled checks pass")
                 .font(.callout.weight(.semibold))
                 .foregroundStyle(report.hasViolation ? .red : .green)
