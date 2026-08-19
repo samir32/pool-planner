@@ -73,6 +73,17 @@ struct Scenario: Codable, Equatable, Identifiable {
     var rules: RuleProfile
 }
 
+/// Georeferencing parameters for an imported site plan / survey image.
+/// The image itself is stored as a separate file next to project.json.
+struct SitePlanParams: Codable, Equatable {
+    var center: LatLng
+    /// Real-world width of the image on the ground, meters.
+    var widthM: Double = 30
+    var rotationDeg: Double = 0
+    var opacity: Double = 0.7
+    var whiteBacking = true
+}
+
 /// Everything worth restoring between launches — replaces the web app's
 /// localStorage. (SwiftData can supersede this store later without touching
 /// the model layer; the app plan's Phase 6 iCloud sync would ride on that.)
@@ -88,6 +99,7 @@ struct ProjectState: Codable, Equatable {
     var pins: [PlacedPin] = []
     var rules: RuleProfile = .example
     var scenarios: [Scenario] = []
+    var sitePlan: SitePlanParams?
 }
 
 /// Loads/saves the project as JSON in the app's Documents directory.
@@ -108,5 +120,22 @@ struct ProjectStore {
     func save(_ state: ProjectState) {
         guard let data = try? JSONEncoder().encode(state) else { return }
         try? data.write(to: url, options: .atomic)
+    }
+
+    /// The site plan image lives beside project.json as PNG data.
+    var sitePlanImageURL: URL {
+        url.deletingLastPathComponent().appendingPathComponent("siteplan.png")
+    }
+
+    func loadSitePlanImage() -> Data? {
+        try? Data(contentsOf: sitePlanImageURL)
+    }
+
+    func saveSitePlanImage(_ data: Data?) {
+        if let data {
+            try? data.write(to: sitePlanImageURL, options: .atomic)
+        } else {
+            try? FileManager.default.removeItem(at: sitePlanImageURL)
+        }
     }
 }

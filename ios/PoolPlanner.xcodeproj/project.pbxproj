@@ -15,6 +15,7 @@
 		664F227CDDA2EBE99B914B18 /* PlannerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */; };
 		684251B92EA48ED0AD741A30 /* PoolPlannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */; };
 		86B478F69D8FD3CDB2DACF5F /* GeometryCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F01C17C59057593070CDA6 /* GeometryCore.swift */; };
+		8EF3B55710C48D70138FB496 /* SitePlanOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86796454AA6733B84AB60759 /* SitePlanOverlay.swift */; };
 		A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E76699CF3214F7DC672E9 /* UnitFormatter.swift */; };
 		A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */; };
 		A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */; };
@@ -22,6 +23,7 @@
 		C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */; };
 		C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */; };
 		CDE04E062EC8CD38D49A2193 /* ComplianceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */; };
+		E4058E4A57C796BD948690BE /* Exporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4286AA38C3D984AF276A299 /* Exporter.swift */; };
 		E7BB55BBA4FF9F6BB728FB13 /* PlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */; };
 		F38B4F9B9FD6C142B9B8F709 /* PoolMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B2E8115E1336954AB9E65C /* PoolMapView.swift */; };
 /* End PBXBuildFile section */
@@ -45,6 +47,7 @@
 		72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceEngine.swift; sourceTree = "<group>"; };
 		768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolPlannerApp.swift; sourceTree = "<group>"; };
 		7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerView.swift; sourceTree = "<group>"; };
+		86796454AA6733B84AB60759 /* SitePlanOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitePlanOverlay.swift; sourceTree = "<group>"; };
 		87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerModel.swift; sourceTree = "<group>"; };
 		8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatterTests.swift; sourceTree = "<group>"; };
 		902E76699CF3214F7DC672E9 /* UnitFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatter.swift; sourceTree = "<group>"; };
@@ -52,6 +55,7 @@
 		9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryParityTests.swift; sourceTree = "<group>"; };
 		BD58E7E21213DA39C0E61E11 /* PoolShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolShape.swift; sourceTree = "<group>"; };
 		C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */ = {isa = PBXFileReference; path = "gen-fixtures.mjs"; sourceTree = "<group>"; };
+		C4286AA38C3D984AF276A299 /* Exporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exporter.swift; sourceTree = "<group>"; };
 		CC1850E08BA18F77662E27EF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CEE61D778DD0FDB7495E7241 /* RuleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleProfile.swift; sourceTree = "<group>"; };
 		F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
@@ -151,6 +155,7 @@
 		D1E3621D6E347B0AEB94585A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				C4286AA38C3D984AF276A299 /* Exporter.swift */,
 				902E76699CF3214F7DC672E9 /* UnitFormatter.swift */,
 			);
 			path = Services;
@@ -160,6 +165,7 @@
 			isa = PBXGroup;
 			children = (
 				96B2E8115E1336954AB9E65C /* PoolMapView.swift */,
+				86796454AA6733B84AB60759 /* SitePlanOverlay.swift */,
 			);
 			path = Map;
 			sourceTree = "<group>";
@@ -256,6 +262,7 @@
 			files = (
 				A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */,
 				0F14D4E99C630419AB550AA4 /* ContentView.swift in Sources */,
+				E4058E4A57C796BD948690BE /* Exporter.swift in Sources */,
 				86B478F69D8FD3CDB2DACF5F /* GeometryCore.swift in Sources */,
 				664F227CDDA2EBE99B914B18 /* PlannerModel.swift in Sources */,
 				E7BB55BBA4FF9F6BB728FB13 /* PlannerView.swift in Sources */,
@@ -264,6 +271,7 @@
 				12B460869C7AD0089A815DDA /* PoolShape.swift in Sources */,
 				A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */,
 				4712C01D384E2B18703DBACC /* RuleProfile.swift in Sources */,
+				8EF3B55710C48D70138FB496 /* SitePlanOverlay.swift in Sources */,
 				A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

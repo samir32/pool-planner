@@ -2,6 +2,8 @@ import Foundation
 import CoreLocation
 import Combine
 import MapKit
+import UIKit
+import PDFKit
 
 /// A named pool preset (dimensions in feet, matching retail sizing).
 struct PoolPreset: Identifiable {
@@ -75,6 +77,15 @@ final class PlannerModel: NSObject, ObservableObject {
     @Published var measureSnapped: [Bool] = []
     @Published var scenarios: [Scenario] = []
 
+    // Phase 5: site plan + export
+    @Published var sitePlan: SitePlanParams?
+    @Published var sitePlanImage: UIImage?
+    @Published var exportURLs: [URL]?
+    @Published var isExporting = false
+    @Published var exportError: String?
+    /// Kept current by the map coordinator; the exporter snapshots this region.
+    var visibleRegion: MKCoordinateRegion?
+
     private let locationManager = CLLocationManager()
     private let geocoder = CLGeocoder()
     private var tookFirstFix = false
@@ -104,7 +115,7 @@ final class PlannerModel: NSObject, ObservableObject {
         ProjectState(
             poolCenter: poolCenter, shape: shape, widthFt: widthFt, lengthFt: lengthFt,
             rotationDeg: rotationDeg, units: units, lot: lot, structures: structures,
-            pins: pins, rules: rules, scenarios: scenarios
+            pins: pins, rules: rules, scenarios: scenarios, sitePlan: sitePlan
         )
     }
 
@@ -120,6 +131,130 @@ final class PlannerModel: NSObject, ObservableObject {
         pins = state.pins
         rules = state.rules
         scenarios = state.scenarios
+        sitePlan = state.sitePlan
+        if state.sitePlan != nil, let data = store.loadSitePlanImage() {
+            sitePlanImage = UIImage(data: data)
+        }
+        if sitePlanImage == nil { sitePlan = nil }
+    }
+
+    // MARK: - Site plan
+
+    /// Accepts image data or a PDF (first page is rendered to an image).
+    func importSitePlan(data: Data, isPDF: Bool) {
+        let image: UIImage?
+        if isPDF {
+            image = Self.renderPDFFirstPage(data: data)
+        } else {
+            image = UIImage(data: data)
+        }
+        guard let image else {
+            exportError = "Couldn't read that file."
+            return
+        }
+        sitePlanImage = image
+        let center = poolCenter ?? visibleRegion.map {
+            LatLng(lat: $0.center.latitude, lng: $0.center.longitude)
+        } ?? LatLng(lat: 45.0, lng: -95.0)
+        sitePlan = SitePlanParams(center: center)
+        store.saveSitePlanImage(image.pngData())
+    }
+
+    func removeSitePlan() {
+        sitePlan = nil
+        sitePlanImage = nil
+        store.saveSitePlanImage(nil)
+    }
+
+    func centerSitePlanAtMapCenter() {
+        guard var params = sitePlan, let region = visibleRegion else { return }
+        params.center = LatLng(lat: region.center.latitude, lng: region.center.longitude)
+        sitePlan = params
+    }
+
+    // MARK: - Export
+
+    var poolSpecLine: String? {
+        guard poolCenter != nil else { return nil }
+        let f = formatter
+        let shapeWord: String
+        switch shape {
+        case .oval: shapeWord = "oval"
+        case .round: shapeWord = "round"
+        case .rect: shapeWord = "rectangle"
+        }
+        return "Pool: \(f.poolDimension(widthFt * Geo.metersPerFoot)) × \(f.poolDimension(lengthFt * Geo.metersPerFoot)) \(shapeWord) — water area \(f.area(footprintM2))"
+    }
+
+    /// Region tightly framing everything drawn (pool, lot, structures, pins,
+    /// site plan), with padding — falls back to the visible map region.
+    private func exportRegion() -> MKCoordinateRegion? {
+        var coords: [LatLng] = []
+        if let ring = poolRing { coords += ring }
+        coords += lot
+        for s in structures { coords += s }
+        coords += pins.map(\.position)
+        if let sp = sitePlan {
+            let half = sp.widthM // generous: covers height and rotation
+            coords.append(Geo.offset(sp.center, dx: -half, dy: -half))
+            coords.append(Geo.offset(sp.center, dx: half, dy: half))
+        }
+        guard let first = coords.first else { return visibleRegion }
+        var minLat = first.lat, maxLat = first.lat, minLng = first.lng, maxLng = first.lng
+        for c in coords {
+            minLat = min(minLat, c.lat); maxLat = max(maxLat, c.lat)
+            minLng = min(minLng, c.lng); maxLng = max(maxLng, c.lng)
+        }
+        let center = LatLng(lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2)
+        let spanNS = (maxLat - minLat) * 111_320
+        let spanEW = (maxLng - minLng) * 111_320 * cos(center.lat * .pi / 180)
+        let spanM = max(50, max(spanNS, spanEW) * 1.6)
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: center.lat, longitude: center.lng),
+            latitudinalMeters: spanM, longitudinalMeters: spanM
+        )
+    }
+
+    func export() {
+        guard let region = exportRegion() else {
+            exportError = "Map isn't ready yet."
+            return
+        }
+        isExporting = true
+        exportError = nil
+        let input = Exporter.Input(
+            scene: mapScene,
+            sitePlanImage: sitePlanImage,
+            region: region,
+            formatter: formatter,
+            report: report,
+            rules: rules,
+            poolSpec: poolSpecLine,
+            address: searchText.trimmingCharacters(in: .whitespaces)
+        )
+        Task {
+            do {
+                exportURLs = try await Exporter.export(input)
+            } catch {
+                exportError = "Export failed — try again."
+            }
+            isExporting = false
+        }
+    }
+
+    private static func renderPDFFirstPage(data: Data) -> UIImage? {
+        guard let doc = PDFDocument(data: data), let page = doc.page(at: 0) else { return nil }
+        let bounds = page.bounds(for: .mediaBox)
+        let scale = min(4, 3000 / max(bounds.width, bounds.height)) // cap at ~3000 px
+        let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        return UIGraphicsImageRenderer(size: size).image { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            ctx.cgContext.translateBy(x: 0, y: size.height)
+            ctx.cgContext.scaleBy(x: scale, y: -scale)
+            ctx.cgContext.translateBy(x: -bounds.minX, y: -bounds.minY)
+            page.draw(with: .mediaBox, to: ctx.cgContext)
+        }
     }
 
     var formatter: UnitFormatter { UnitFormatter(system: units) }

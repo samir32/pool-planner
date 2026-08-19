@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UniformTypeIdentifiers
 
 struct PlannerView: View {
     @StateObject private var model = PlannerModel()
@@ -22,12 +24,33 @@ struct PlannerView: View {
             }
         }
         .onAppear { model.start() }
+        .sheet(isPresented: Binding(
+            get: { model.exportURLs != nil },
+            set: { if !$0 { model.exportURLs = nil } }
+        )) {
+            if let urls = model.exportURLs {
+                ActivityView(items: urls)
+            }
+        }
     }
+}
+
+/// UIActivityViewController wrapper — the standard share sheet.
+private struct ActivityView: UIViewControllerRepresentable {
+    let items: [URL]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
 
 struct SidebarView: View {
     @ObservedObject var model: PlannerModel
     @State private var scenarioName = ""
+    @State private var photoItem: PhotosPickerItem?
+    @State private var showFileImporter = false
 
     var body: some View {
         ScrollView {
@@ -42,9 +65,11 @@ struct SidebarView: View {
                 siteSection
                 pinsSection
                 measureSection
+                sitePlanSection
                 rulesSection
                 scenariosSection
                 unitsSection
+                exportSection
                 readoutSection
 
                 Text("Planning aid, not a survey. Verify requirements with your local building/zoning authority.")
@@ -304,6 +329,134 @@ struct SidebarView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+            }
+        }
+    }
+
+    // MARK: Site plan
+
+    private var sitePlanSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Site plan", systemImage: "doc.viewfinder")
+                .font(.subheadline.weight(.semibold))
+            if model.sitePlan == nil {
+                HStack {
+                    PhotosPicker(selection: $photoItem, matching: .images) {
+                        Text("Photos")
+                    }
+                    Button("File (PDF/image)") { showFileImporter = true }
+                }
+                .buttonStyle(.bordered)
+                Text("Overlay a survey or site plan and scale it to match the map.")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            } else {
+                sitePlanControls
+            }
+        }
+        .onChange(of: photoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    model.importSitePlan(data: data, isPDF: false)
+                }
+                photoItem = nil
+            }
+        }
+        .fileImporter(
+            isPresented: $showFileImporter,
+            allowedContentTypes: [.pdf, .image]
+        ) { result in
+            guard case .success(let url) = result else { return }
+            let secured = url.startAccessingSecurityScopedResource()
+            defer { if secured { url.stopAccessingSecurityScopedResource() } }
+            if let data = try? Data(contentsOf: url) {
+                model.importSitePlan(data: data, isPDF: url.pathExtension.lowercased() == "pdf")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sitePlanControls: some View {
+        sitePlanSlider(
+            "Width on ground",
+            value: Binding(
+                get: { model.sitePlan?.widthM ?? 30 },
+                set: { model.sitePlan?.widthM = $0 }
+            ),
+            range: 2...120, step: 0.5,
+            display: model.formatter.distance(model.sitePlan?.widthM ?? 30)
+        )
+        sitePlanSlider(
+            "Rotation",
+            value: Binding(
+                get: { model.sitePlan?.rotationDeg ?? 0 },
+                set: { model.sitePlan?.rotationDeg = $0 }
+            ),
+            range: 0...360, step: 1,
+            display: "\(Int(model.sitePlan?.rotationDeg ?? 0))°"
+        )
+        sitePlanSlider(
+            "Opacity",
+            value: Binding(
+                get: { model.sitePlan?.opacity ?? 0.7 },
+                set: { model.sitePlan?.opacity = $0 }
+            ),
+            range: 0.1...1, step: 0.05,
+            display: "\(Int((model.sitePlan?.opacity ?? 0.7) * 100)) %"
+        )
+        Toggle("White backing sheet", isOn: Binding(
+            get: { model.sitePlan?.whiteBacking ?? true },
+            set: { model.sitePlan?.whiteBacking = $0 }
+        ))
+        .font(.callout)
+        HStack {
+            Button("Center on map") { model.centerSitePlanAtMapCenter() }
+            Button("Remove", role: .destructive) { model.removeSitePlan() }
+        }
+        .buttonStyle(.bordered)
+    }
+
+    private func sitePlanSlider(
+        _ label: String, value: Binding<Double>,
+        range: ClosedRange<Double>, step: Double, display: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(label)
+                Spacer()
+                Text(display)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            .font(.callout)
+            Slider(value: value, in: range, step: step)
+        }
+    }
+
+    // MARK: Export
+
+    private var exportSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Export", systemImage: "square.and.arrow.up")
+                .font(.subheadline.weight(.semibold))
+            Button {
+                model.export()
+            } label: {
+                if model.isExporting {
+                    ProgressView().frame(maxWidth: .infinity)
+                } else {
+                    Label("Export plan (PDF + PNG)", systemImage: "doc.richtext")
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(model.isExporting)
+            Text("Snapshots the visible map with all overlays, a scale bar and a compliance summary.")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+            if let err = model.exportError {
+                Text(err).font(.footnote).foregroundStyle(.red)
             }
         }
     }

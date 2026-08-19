@@ -30,6 +30,7 @@ struct MapScene: Equatable {
     var measurePoints: [LatLng]
     var measureSnapped: [Bool]
     var displayUnits: UnitSystem
+    var sitePlan: SitePlanParams?
 }
 
 extension PlannerModel {
@@ -103,7 +104,8 @@ extension PlannerModel {
             pins: pins,
             measurePoints: measurePoints,
             measureSnapped: measureSnapped,
-            displayUnits: units
+            displayUnits: units,
+            sitePlan: sitePlan
         )
     }
 }
@@ -172,7 +174,7 @@ final class MeasureDotAnnotation: NSObject, MKAnnotation {
 
 // MARK: - Palette (web app colors)
 
-private enum Palette {
+enum Palette {
     static let poolFill = UIColor(red: 0x15 / 255, green: 0x87 / 255, blue: 0xA8 / 255, alpha: 0.55)
     static let poolStroke = UIColor(red: 0x0D / 255, green: 0x6A / 255, blue: 0x85 / 255, alpha: 1)
     static let lot = UIColor(red: 0x2E / 255, green: 0x7D / 255, blue: 0x32 / 255, alpha: 1)
@@ -432,6 +434,9 @@ struct PoolMapView: UIViewRepresentable {
                 sceneOverlays.append(line)
             }
 
+            if let params = scene.sitePlan, let image = model.sitePlanImage {
+                sceneOverlays.append(SitePlanOverlay(params: params, image: image))
+            }
             if let ring = scene.poolRing { addPolygon(ring, title: "pool") }
             if scene.lot.count >= 3 {
                 addPolygon(scene.lot, title: scene.lotViolating ? "lotViol" : "lot")
@@ -692,7 +697,17 @@ struct PoolMapView: UIViewRepresentable {
 
         // MARK: overlay renderers
 
+        nonisolated func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            let region = mapView.region
+            MainActor.assumeIsolated {
+                model.visibleRegion = region
+            }
+        }
+
         nonisolated func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let sitePlan = overlay as? SitePlanOverlay {
+                return SitePlanRenderer(overlay: sitePlan)
+            }
             if let poly = overlay as? MKPolygon {
                 let r = MKPolygonRenderer(polygon: poly)
                 r.lineWidth = 2
