@@ -1,0 +1,48 @@
+name: PoolPlanner
+options:
+  bundleIdPrefix: com.samir
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+
+targets:
+  PoolPlanner:
+    type: application
+    platform: iOS
+    sources:
+      - PoolPlanner
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Your location starts the map near your property. Nothing is stored or shared."
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+        CODE_SIGN_STYLE: Automatic
+
+  PoolPlannerTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - PoolPlannerTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: PoolPlanner
+
+schemes:
+  PoolPlanner:
+    build:
+      targets:
+        PoolPlanner: all
+        PoolPlannerTests: [test]
+    test:
+      targets:
+        - PoolPlannerTests

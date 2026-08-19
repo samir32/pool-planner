@@ -1,0 +1,523 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0F14D4E99C630419AB550AA4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1850E08BA18F77662E27EF /* ContentView.swift */; };
+		12B460869C7AD0089A815DDA /* PoolShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58E7E21213DA39C0E61E11 /* PoolShape.swift */; };
+		246B45C3A6ECAA6CF4214501 /* ProjectStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */; };
+		32A8609480CF6FCD58224615 /* parity.json in Resources */ = {isa = PBXBuildFile; fileRef = 19D5D1C5E50414258885F4EA /* parity.json */; };
+		4712C01D384E2B18703DBACC /* RuleProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE61D778DD0FDB7495E7241 /* RuleProfile.swift */; };
+		664F227CDDA2EBE99B914B18 /* PlannerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */; };
+		684251B92EA48ED0AD741A30 /* PoolPlannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */; };
+		86B478F69D8FD3CDB2DACF5F /* GeometryCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F01C17C59057593070CDA6 /* GeometryCore.swift */; };
+		A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E76699CF3214F7DC672E9 /* UnitFormatter.swift */; };
+		A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */; };
+		A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */; };
+		B1739C808CBEFE2CD65D537C /* gen-fixtures.mjs in Resources */ = {isa = PBXBuildFile; fileRef = C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */; };
+		C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */; };
+		C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */; };
+		CDE04E062EC8CD38D49A2193 /* ComplianceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */; };
+		E7BB55BBA4FF9F6BB728FB13 /* PlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */; };
+		F38B4F9B9FD6C142B9B8F709 /* PoolMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B2E8115E1336954AB9E65C /* PoolMapView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6515B41A6079DBACE719DE52 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3C61455637C073E87C4EA513 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 37CC3FB7504261161ED647D9;
+			remoteInfo = PoolPlanner;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		16F01C17C59057593070CDA6 /* GeometryCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryCore.swift; sourceTree = "<group>"; };
+		19D5D1C5E50414258885F4EA /* parity.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = parity.json; sourceTree = "<group>"; };
+		1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStateTests.swift; sourceTree = "<group>"; };
+		3D540E3EAB7F21762CF79BA0 /* PoolPlannerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PoolPlannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		44AF4B7AB2E09233CB05A960 /* PoolPlanner.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PoolPlanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceEngine.swift; sourceTree = "<group>"; };
+		768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolPlannerApp.swift; sourceTree = "<group>"; };
+		7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerView.swift; sourceTree = "<group>"; };
+		87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerModel.swift; sourceTree = "<group>"; };
+		8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatterTests.swift; sourceTree = "<group>"; };
+		902E76699CF3214F7DC672E9 /* UnitFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatter.swift; sourceTree = "<group>"; };
+		96B2E8115E1336954AB9E65C /* PoolMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolMapView.swift; sourceTree = "<group>"; };
+		9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryParityTests.swift; sourceTree = "<group>"; };
+		BD58E7E21213DA39C0E61E11 /* PoolShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolShape.swift; sourceTree = "<group>"; };
+		C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */ = {isa = PBXFileReference; path = "gen-fixtures.mjs"; sourceTree = "<group>"; };
+		CC1850E08BA18F77662E27EF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CEE61D778DD0FDB7495E7241 /* RuleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleProfile.swift; sourceTree = "<group>"; };
+		F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
+		FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceEngineTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		2AD89655F824C5D5B8E51DF7 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */,
+				CEE61D778DD0FDB7495E7241 /* RuleProfile.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		3312D119FED8C99574402036 /* Geometry */ = {
+			isa = PBXGroup;
+			children = (
+				72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */,
+				16F01C17C59057593070CDA6 /* GeometryCore.swift */,
+				BD58E7E21213DA39C0E61E11 /* PoolShape.swift */,
+			);
+			path = Geometry;
+			sourceTree = "<group>";
+		};
+		402B652C76FAE6D1CFB9C9DB /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		46BAD8652A0A183BA066CFBD /* PoolPlannerTests */ = {
+			isa = PBXGroup;
+			children = (
+				FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */,
+				9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */,
+				1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */,
+				8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */,
+				7B8FFAD3B3361CCC7EDCE473 /* Fixtures */,
+			);
+			path = PoolPlannerTests;
+			sourceTree = "<group>";
+		};
+		54A960B2E34820ADD0965241 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CC1850E08BA18F77662E27EF /* ContentView.swift */,
+				87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */,
+				768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5ACA25E268D2FC931C502434 /* PoolPlanner */ = {
+			isa = PBXGroup;
+			children = (
+				54A960B2E34820ADD0965241 /* App */,
+				3312D119FED8C99574402036 /* Geometry */,
+				F91528ED52280053FC546FAF /* Map */,
+				2AD89655F824C5D5B8E51DF7 /* Model */,
+				D1E3621D6E347B0AEB94585A /* Services */,
+				402B652C76FAE6D1CFB9C9DB /* UI */,
+			);
+			path = PoolPlanner;
+			sourceTree = "<group>";
+		};
+		7B8FFAD3B3361CCC7EDCE473 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */,
+				19D5D1C5E50414258885F4EA /* parity.json */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		B7CAD7747798418706CA2A6C = {
+			isa = PBXGroup;
+			children = (
+				5ACA25E268D2FC931C502434 /* PoolPlanner */,
+				46BAD8652A0A183BA066CFBD /* PoolPlannerTests */,
+				CB0798346CEFFA556AF89EAD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CB0798346CEFFA556AF89EAD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				44AF4B7AB2E09233CB05A960 /* PoolPlanner.app */,
+				3D540E3EAB7F21762CF79BA0 /* PoolPlannerTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D1E3621D6E347B0AEB94585A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				902E76699CF3214F7DC672E9 /* UnitFormatter.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		F91528ED52280053FC546FAF /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				96B2E8115E1336954AB9E65C /* PoolMapView.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		37CC3FB7504261161ED647D9 /* PoolPlanner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 573156C5235313AECE8178C6 /* Build configuration list for PBXNativeTarget "PoolPlanner" */;
+			buildPhases = (
+				3588F0A58CAB5ECBFA9A8E55 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PoolPlanner;
+			packageProductDependencies = (
+			);
+			productName = PoolPlanner;
+			productReference = 44AF4B7AB2E09233CB05A960 /* PoolPlanner.app */;
+			productType = "com.apple.product-type.application";
+		};
+		6C9ACEFF746FF695EEA61C17 /* PoolPlannerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7979D2E5FE1EB483496A5C25 /* Build configuration list for PBXNativeTarget "PoolPlannerTests" */;
+			buildPhases = (
+				7881A29E4EB36F4409DE249A /* Sources */,
+				F87DC7CAA7A6FC9FF7F10A7A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				11AF7F57F347D66F4D57C4E1 /* PBXTargetDependency */,
+			);
+			name = PoolPlannerTests;
+			packageProductDependencies = (
+			);
+			productName = PoolPlannerTests;
+			productReference = 3D540E3EAB7F21762CF79BA0 /* PoolPlannerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3C61455637C073E87C4EA513 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					37CC3FB7504261161ED647D9 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F1550337A7AF0434CF0A7BE4 /* Build configuration list for PBXProject "PoolPlanner" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = B7CAD7747798418706CA2A6C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = CB0798346CEFFA556AF89EAD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				37CC3FB7504261161ED647D9 /* PoolPlanner */,
+				6C9ACEFF746FF695EEA61C17 /* PoolPlannerTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F87DC7CAA7A6FC9FF7F10A7A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1739C808CBEFE2CD65D537C /* gen-fixtures.mjs in Resources */,
+				32A8609480CF6FCD58224615 /* parity.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3588F0A58CAB5ECBFA9A8E55 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */,
+				0F14D4E99C630419AB550AA4 /* ContentView.swift in Sources */,
+				86B478F69D8FD3CDB2DACF5F /* GeometryCore.swift in Sources */,
+				664F227CDDA2EBE99B914B18 /* PlannerModel.swift in Sources */,
+				E7BB55BBA4FF9F6BB728FB13 /* PlannerView.swift in Sources */,
+				F38B4F9B9FD6C142B9B8F709 /* PoolMapView.swift in Sources */,
+				684251B92EA48ED0AD741A30 /* PoolPlannerApp.swift in Sources */,
+				12B460869C7AD0089A815DDA /* PoolShape.swift in Sources */,
+				A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */,
+				4712C01D384E2B18703DBACC /* RuleProfile.swift in Sources */,
+				A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7881A29E4EB36F4409DE249A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CDE04E062EC8CD38D49A2193 /* ComplianceEngineTests.swift in Sources */,
+				C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */,
+				246B45C3A6ECAA6CF4214501 /* ProjectStateTests.swift in Sources */,
+				C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		11AF7F57F347D66F4D57C4E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 37CC3FB7504261161ED647D9 /* PoolPlanner */;
+			targetProxy = 6515B41A6079DBACE719DE52 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		33DCCCE9446B32E31B6992D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samir.PoolPlannerTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PoolPlanner.app/PoolPlanner";
+			};
+			name = Release;
+		};
+		8A33C63CA70AAFBF890EFA87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location starts the map near your property. Nothing is stored or shared.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.samir.PoolPlanner;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		9677753B76D2718296508A57 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		D322DDB28E4EF7133E7968B5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samir.PoolPlannerTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PoolPlanner.app/PoolPlanner";
+			};
+			name = Debug;
+		};
+		E8D2A3FECD8F52E818CE9D8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location starts the map near your property. Nothing is stored or shared.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.samir.PoolPlanner;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		EA2E45F7F978F5B1C35FD05E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		573156C5235313AECE8178C6 /* Build configuration list for PBXNativeTarget "PoolPlanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8D2A3FECD8F52E818CE9D8F /* Debug */,
+				8A33C63CA70AAFBF890EFA87 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7979D2E5FE1EB483496A5C25 /* Build configuration list for PBXNativeTarget "PoolPlannerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D322DDB28E4EF7133E7968B5 /* Debug */,
+				33DCCCE9446B32E31B6992D0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F1550337A7AF0434CF0A7BE4 /* Build configuration list for PBXProject "PoolPlanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9677753B76D2718296508A57 /* Debug */,
+				EA2E45F7F978F5B1C35FD05E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3C61455637C073E87C4EA513 /* Project object */;
+}
