@@ -23,6 +23,7 @@
 		C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */; };
 		C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */; };
 		CDE04E062EC8CD38D49A2193 /* ComplianceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */; };
+		D0357FF27D4492674414C0C8 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 043FFCD013081919AB5F5CE4 /* Localizable.xcstrings */; };
 		E4058E4A57C796BD948690BE /* Exporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4286AA38C3D984AF276A299 /* Exporter.swift */; };
 		E7BB55BBA4FF9F6BB728FB13 /* PlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B925A627CAD7ED9CA5C1234 /* PlannerView.swift */; };
 		F38B4F9B9FD6C142B9B8F709 /* PoolMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B2E8115E1336954AB9E65C /* PoolMapView.swift */; };
@@ -39,6 +40,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		043FFCD013081919AB5F5CE4 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		16F01C17C59057593070CDA6 /* GeometryCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryCore.swift; sourceTree = "<group>"; };
 		19D5D1C5E50414258885F4EA /* parity.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = parity.json; sourceTree = "<group>"; };
 		1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStateTests.swift; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 		5ACA25E268D2FC931C502434 /* PoolPlanner */ = {
 			isa = PBXGroup;
 			children = (
+				043FFCD013081919AB5F5CE4 /* Localizable.xcstrings */,
 				54A960B2E34820ADD0965241 /* App */,
 				3312D119FED8C99574402036 /* Geometry */,
 				F91528ED52280053FC546FAF /* Map */,
@@ -178,6 +181,7 @@
 			buildConfigurationList = 573156C5235313AECE8178C6 /* Build configuration list for PBXNativeTarget "PoolPlanner" */;
 			buildPhases = (
 				3588F0A58CAB5ECBFA9A8E55 /* Sources */,
+				2DEE3CEEB3BFB94377D9B0A2 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -229,6 +233,7 @@
 			knownRegions = (
 				Base,
 				en,
+				fr,
 			);
 			mainGroup = B7CAD7747798418706CA2A6C;
 			minimizedProjectReferenceProxies = 1;
@@ -244,6 +249,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2DEE3CEEB3BFB94377D9B0A2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0357FF27D4492674414C0C8 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F87DC7CAA7A6FC9FF7F10A7A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;

@@ -1,6 +1,7 @@
 name: PoolPlanner
 options:
   bundleIdPrefix: com.samir
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -15,6 +16,7 @@ targets:
     platform: iOS
     sources:
       - PoolPlanner
+    knownRegions: [en, fr, Base]
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "2"

@@ -27,15 +27,15 @@ enum PinKind: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .equipmentSet: return "Equipment set"
-        case .heatPump: return "Heat pump"
-        case .pump: return "Pump"
-        case .filter: return "Filter"
-        case .ladder: return "Ladder"
-        case .gate: return "Gate"
-        case .selfClosingGate: return "Self-closing gate"
-        case .doorAlarm: return "Door alarm"
-        case .fenceOpening: return "Fence opening"
+        case .equipmentSet: return String(localized: "Equipment set")
+        case .heatPump: return String(localized: "Heat pump")
+        case .pump: return String(localized: "Pump")
+        case .filter: return String(localized: "Filter")
+        case .ladder: return String(localized: "Ladder")
+        case .gate: return String(localized: "Gate")
+        case .selfClosingGate: return String(localized: "Self-closing gate")
+        case .doorAlarm: return String(localized: "Door alarm")
+        case .fenceOpening: return String(localized: "Fence opening")
         }
     }
 

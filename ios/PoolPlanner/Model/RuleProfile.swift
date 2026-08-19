@@ -45,5 +45,7 @@ public struct RuleProfile: Codable, Equatable, Sendable {
 
     /// Conservative common starting point, clearly labeled as an example —
     /// never presented as any jurisdiction's actual rule.
-    public static let example = RuleProfile(name: "Example — verify with your municipality")
+    public static let example = RuleProfile(
+        name: String(localized: "Example — verify with your municipality")
+    )
 }

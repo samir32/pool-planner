@@ -1,0 +1,1370 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "Pool Placement Planner": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificateur de piscine"
+          }
+        }
+      }
+    },
+    "Planning aid, not a survey. Verify requirements with your local building/zoning authority.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outil de planification, pas un certificat de localisation. Vérifiez les exigences auprès de votre service d'urbanisme."
+          }
+        }
+      }
+    },
+    "Address": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse"
+          }
+        }
+      }
+    },
+    "Search address…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher une adresse…"
+          }
+        }
+      }
+    },
+    "Go": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aller"
+          }
+        }
+      }
+    },
+    "Address not found": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse introuvable"
+          }
+        }
+      }
+    },
+    "Address lookup failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la recherche d'adresse"
+          }
+        }
+      }
+    },
+    "Pool": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscine"
+          }
+        }
+      }
+    },
+    "Shape": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forme"
+          }
+        }
+      }
+    },
+    "Oval": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ovale"
+          }
+        }
+      }
+    },
+    "Round": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ronde"
+          }
+        }
+      }
+    },
+    "Rectangle": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rectangulaire"
+          }
+        }
+      }
+    },
+    "Place pool at map center": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Placer la piscine au centre"
+          }
+        }
+      }
+    },
+    "Move pool to map center": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacer la piscine au centre"
+          }
+        }
+      }
+    },
+    "Presets": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèles"
+          }
+        }
+      }
+    },
+    "Above-ground": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors-terre"
+          }
+        }
+      }
+    },
+    "Inground": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creusée"
+          }
+        }
+      }
+    },
+    "Diameter": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diamètre"
+          }
+        }
+      }
+    },
+    "Width": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largeur"
+          }
+        }
+      }
+    },
+    "Length": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longueur"
+          }
+        }
+      }
+    },
+    "Rotation": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation"
+          }
+        }
+      }
+    },
+    "Tip: two-finger twist on the pool rotates it too.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Astuce : une rotation à deux doigts sur la piscine la fait pivoter aussi."
+          }
+        }
+      }
+    },
+    "Double-tap the map to place the pool": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez deux fois la carte pour placer la piscine"
+          }
+        }
+      }
+    },
+    "Property & structures": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terrain et bâtiments"
+          }
+        }
+      }
+    },
+    "Draw lot": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracer le terrain"
+          }
+        }
+      }
+    },
+    "Redraw lot": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retracer le terrain"
+          }
+        }
+      }
+    },
+    "Add structure": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un bâtiment"
+          }
+        }
+      }
+    },
+    "Add zone": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une zone"
+          }
+        }
+      }
+    },
+    "Clear lot": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer le terrain"
+          }
+        }
+      }
+    },
+    "Remove structure (%lld)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer un bâtiment (%lld)"
+          }
+        }
+      }
+    },
+    "Finish (%lld)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminer (%lld)"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Tap the map at each property corner, then Finish.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez chaque coin du terrain, puis Terminer."
+          }
+        }
+      }
+    },
+    "Tap the map at each structure corner, then Finish.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez chaque coin du bâtiment, puis Terminer."
+          }
+        }
+      }
+    },
+    "Tap the map around the easement/zone, then Finish.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez le pourtour de la servitude/zone, puis Terminer."
+          }
+        }
+      }
+    },
+    "Zone %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone %lld"
+          }
+        }
+      }
+    },
+    "Setback": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge"
+          }
+        }
+      }
+    },
+    "Equipment & safety pins": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équipement et accès sécurité"
+          }
+        }
+      }
+    },
+    "Add pin at map center": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un repère au centre"
+          }
+        }
+      }
+    },
+    "Equipment (measured)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équipement (mesuré)"
+          }
+        }
+      }
+    },
+    "Safety (labels)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sécurité (étiquettes)"
+          }
+        }
+      }
+    },
+    "Drag a pin on the map to reposition it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser un repère sur la carte pour le déplacer."
+          }
+        }
+      }
+    },
+    "Equipment set": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ensemble d'équipement"
+          }
+        }
+      }
+    },
+    "Heat pump": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thermopompe"
+          }
+        }
+      }
+    },
+    "Pump": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pompe"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre"
+          }
+        }
+      }
+    },
+    "Ladder": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échelle"
+          }
+        }
+      }
+    },
+    "Gate": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portail"
+          }
+        }
+      }
+    },
+    "Self-closing gate": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portail à fermeture automatique"
+          }
+        }
+      }
+    },
+    "Door alarm": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarme de porte"
+          }
+        }
+      }
+    },
+    "Fence opening": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouverture de clôture"
+          }
+        }
+      }
+    },
+    "Measure": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesure"
+          }
+        }
+      }
+    },
+    "Measure distances": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurer les distances"
+          }
+        }
+      }
+    },
+    "Stop measuring": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la mesure"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer"
+          }
+        }
+      }
+    },
+    "Tap the map to measure. Taps snap to pool, lot, structure edges and pins.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez la carte pour mesurer. Les points s'aimantent aux bords de la piscine, du terrain, des bâtiments et aux repères."
+          }
+        }
+      }
+    },
+    "Last: %@  ·  Total: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier : %@  ·  Total : %@"
+          }
+        }
+      }
+    },
+    "Site plan": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan d'implantation"
+          }
+        }
+      }
+    },
+    "Photos": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos"
+          }
+        }
+      }
+    },
+    "File (PDF/image)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichier (PDF/image)"
+          }
+        }
+      }
+    },
+    "Overlay a survey or site plan and scale it to match the map.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superposez un certificat de localisation ou un plan et ajustez-le à la carte."
+          }
+        }
+      }
+    },
+    "Width on ground": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largeur au sol"
+          }
+        }
+      }
+    },
+    "Opacity": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacité"
+          }
+        }
+      }
+    },
+    "White backing sheet": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fond blanc"
+          }
+        }
+      }
+    },
+    "Center on map": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Centrer sur la carte"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Couldn't read that file.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire ce fichier."
+          }
+        }
+      }
+    },
+    "Rules": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règlements"
+          }
+        }
+      }
+    },
+    "Example values — verify with your municipality.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs d'exemple — à vérifier auprès de votre municipalité."
+          }
+        }
+      }
+    },
+    "Property-line setback": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge de recul (ligne de terrain)"
+          }
+        }
+      }
+    },
+    "Structure setback": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge de recul (bâtiment)"
+          }
+        }
+      }
+    },
+    "Equipment–pool clearance": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégagement équipement–piscine"
+          }
+        }
+      }
+    },
+    "Equipment–lot setback": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge équipement–terrain"
+          }
+        }
+      }
+    },
+    "Max lot coverage": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taux d'occupation maximal"
+          }
+        }
+      }
+    },
+    "Scenarios": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scénarios"
+          }
+        }
+      }
+    },
+    "Scenario name…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom du scénario…"
+          }
+        }
+      }
+    },
+    "Save": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "oval": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ovale"
+          }
+        }
+      }
+    },
+    "round": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ronde"
+          }
+        }
+      }
+    },
+    "rectangle": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rectangulaire"
+          }
+        }
+      }
+    },
+    "%lld × %lld ft %@, %lld°": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld × %lld pi %@, %lld°"
+          }
+        }
+      }
+    },
+    "Units & view": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unités et affichage"
+          }
+        }
+      }
+    },
+    "Units": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unités"
+          }
+        }
+      }
+    },
+    "ft / in": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pi / po"
+          }
+        }
+      }
+    },
+    "m": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "m"
+          }
+        }
+      }
+    },
+    "Mixed": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mixte"
+          }
+        }
+      }
+    },
+    "Clean view (hide handles)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vue épurée (masquer les poignées)"
+          }
+        }
+      }
+    },
+    "Custom tile layer": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couche de tuiles personnalisée"
+          }
+        }
+      }
+    },
+    "Replaces Apple imagery where it's stale (e.g. a Mapbox key URL). Leave empty for Apple Maps. Custom tiles don't appear in exports.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplace l'imagerie Apple lorsqu'elle est désuète (p. ex. une URL Mapbox avec clé). Laissez vide pour Plans. Les tuiles personnalisées n'apparaissent pas dans les exports."
+          }
+        }
+      }
+    },
+    "Export": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter"
+          }
+        }
+      }
+    },
+    "Export plan (PDF + PNG)": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter le plan (PDF + PNG)"
+          }
+        }
+      }
+    },
+    "Snapshots the visible map with all overlays, a scale bar and a compliance summary.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture la carte visible avec les calques, une échelle et un résumé de conformité."
+          }
+        }
+      }
+    },
+    "Map isn't ready yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carte n'est pas encore prête."
+          }
+        }
+      }
+    },
+    "Export failed — try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de l'export — réessayez."
+          }
+        }
+      }
+    },
+    "No pool placed yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune piscine placée"
+          }
+        }
+      }
+    },
+    "Pool: %@ × %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscine : %@ × %@"
+          }
+        }
+      }
+    },
+    "Water area: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie d'eau : %@"
+          }
+        }
+      }
+    },
+    "Pool is outside the property outline": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La piscine est hors du contour du terrain"
+          }
+        }
+      }
+    },
+    "Lot line %lld: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ligne de terrain %lld : %@"
+          }
+        }
+      }
+    },
+    "Lot: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terrain : %@"
+          }
+        }
+      }
+    },
+    " — pool covers %.1f%%": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " — la piscine occupe %.1f %%"
+          }
+        }
+      }
+    },
+    "Nearest structure: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bâtiment le plus proche : %@"
+          }
+        }
+      }
+    },
+    "Zone %lld: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone %lld : %@"
+          }
+        }
+      }
+    },
+    "%@: pool %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : piscine %@"
+          }
+        }
+      }
+    },
+    ", lot %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", terrain %@"
+          }
+        }
+      }
+    },
+    "⚠ Setback violations": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠ Marges non respectées"
+          }
+        }
+      }
+    },
+    "✓ All enabled checks pass": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Toutes les vérifications actives sont conformes"
+          }
+        }
+      }
+    },
+    "Pool: %@ × %@ %@ — water area %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscine : %@ × %@ %@ — superficie d'eau %@"
+          }
+        }
+      }
+    },
+    "Pool Placement Plan%@  ·  %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan d'implantation de piscine%@  ·  %@"
+          }
+        }
+      }
+    },
+    "PASS  ": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONFORME  "
+          }
+        }
+      }
+    },
+    "FAIL  ": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NON CONFORME  "
+          }
+        }
+      }
+    },
+    "Property-line setback ≥ %@ — nearest %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge (ligne de terrain) ≥ %@ — la plus proche %@"
+          }
+        }
+      }
+    },
+    "Structure setback ≥ %@ — nearest %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marge (bâtiment) ≥ %@ — la plus proche %@"
+          }
+        }
+      }
+    },
+    "Equipment–pool clearance ≥ %@ — nearest %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégagement équipement–piscine ≥ %@ — le plus proche %@"
+          }
+        }
+      }
+    },
+    "Zone %lld clearance%@ — nearest %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dégagement zone %lld%@ — le plus proche %@"
+          }
+        }
+      }
+    },
+    "Lot coverage ≤ %.0f%% — pool covers %.1f%%": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Occupation du terrain ≤ %.0f %% — la piscine occupe %.1f %%"
+          }
+        }
+      }
+    },
+    "Lot area %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie du terrain %@"
+          }
+        }
+      }
+    },
+    "Example — verify with your municipality": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemple — à vérifier auprès de votre municipalité"
+          }
+        }
+      }
+    },
+    "%.1f m²": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%.1f m²"
+          }
+        }
+      }
+    },
+    "%lld ft²": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pi²"
+          }
+        }
+      }
+    },
+    "%.2f m": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%.2f m"
+          }
+        }
+      }
+    },
+    "%lld ft": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pi"
+          }
+        }
+      }
+    },
+    "%lld in": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld po"
+          }
+        }
+      }
+    },
+    "%lld ft %lld in": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pi %lld po"
+          }
+        }
+      }
+    }
+  }
+}

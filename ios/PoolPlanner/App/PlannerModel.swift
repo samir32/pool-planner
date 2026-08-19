@@ -187,7 +187,7 @@ final class PlannerModel: NSObject, ObservableObject {
             image = UIImage(data: data)
         }
         guard let image else {
-            exportError = "Couldn't read that file."
+            exportError = String(localized: "Couldn't read that file.")
             return
         }
         recordUndo()
@@ -220,11 +220,13 @@ final class PlannerModel: NSObject, ObservableObject {
         let f = formatter
         let shapeWord: String
         switch shape {
-        case .oval: shapeWord = "oval"
-        case .round: shapeWord = "round"
-        case .rect: shapeWord = "rectangle"
+        case .oval: shapeWord = String(localized: "oval")
+        case .round: shapeWord = String(localized: "round")
+        case .rect: shapeWord = String(localized: "rectangle")
         }
-        return "Pool: \(f.poolDimension(widthFt * Geo.metersPerFoot)) × \(f.poolDimension(lengthFt * Geo.metersPerFoot)) \(shapeWord) — water area \(f.area(footprintM2))"
+        return String(
+            localized: "Pool: \(f.poolDimension(widthFt * Geo.metersPerFoot)) × \(f.poolDimension(lengthFt * Geo.metersPerFoot)) \(shapeWord) — water area \(f.area(footprintM2))"
+        )
     }
 
     /// Region tightly framing everything drawn (pool, lot, structures, pins,
@@ -258,7 +260,7 @@ final class PlannerModel: NSObject, ObservableObject {
 
     func export() {
         guard let region = exportRegion() else {
-            exportError = "Map isn't ready yet."
+            exportError = String(localized: "Map isn't ready yet.")
             return
         }
         isExporting = true
@@ -277,7 +279,7 @@ final class PlannerModel: NSObject, ObservableObject {
             do {
                 exportURLs = try await Exporter.export(input)
             } catch {
-                exportError = "Export failed — try again."
+                exportError = String(localized: "Export failed — try again.")
             }
             isExporting = false
         }
@@ -564,7 +566,9 @@ final class PlannerModel: NSObject, ObservableObject {
                         spanMeters: 150
                     )
                 } else {
-                    self.searchError = error == nil ? "Address not found" : "Address lookup failed"
+                    self.searchError = error == nil
+                        ? String(localized: "Address not found")
+                        : String(localized: "Address lookup failed")
                 }
             }
         }

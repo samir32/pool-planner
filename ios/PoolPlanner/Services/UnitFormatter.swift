@@ -45,23 +45,23 @@ public struct UnitFormatter: Sendable {
     public func area(_ squareMeters: Double) -> String {
         switch system {
         case .metric, .mixed:
-            return String(format: "%.1f m²", squareMeters)
+            return String(format: String(localized: "%.1f m²"), squareMeters)
         case .imperial:
             let ft2 = squareMeters / (Geo.metersPerFoot * Geo.metersPerFoot)
-            return "\(Int(ft2.rounded())) ft²"
+            return String(localized: "\(Int(ft2.rounded())) ft²")
         }
     }
 
     static func metricDistance(_ meters: Double) -> String {
-        String(format: "%.2f m", Geo.round05(meters))
+        String(format: String(localized: "%.2f m"), Geo.round05(meters))
     }
 
     static func imperialDistance(_ meters: Double) -> String {
         let totalInches = Int((meters / 0.0254).rounded())
         let ft = totalInches / 12
         let inches = totalInches % 12
-        if inches == 0 { return "\(ft) ft" }
-        if ft == 0 { return "\(inches) in" }
-        return "\(ft) ft \(inches) in"
+        if inches == 0 { return String(localized: "\(ft) ft") }
+        if ft == 0 { return String(localized: "\(inches) in") }
+        return String(localized: "\(ft) ft \(inches) in")
     }
 }

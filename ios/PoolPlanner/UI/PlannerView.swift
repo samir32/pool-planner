@@ -181,7 +181,7 @@ struct SidebarView: View {
         }
     }
 
-    private func dimensionRow(_ label: String, value: Binding<Double>, display: String) -> some View {
+    private func dimensionRow(_ label: LocalizedStringKey, value: Binding<Double>, display: String) -> some View {
         HStack {
             Text(label)
             Spacer()
@@ -294,9 +294,9 @@ struct SidebarView: View {
 
     private var drawModeHint: String {
         switch model.drawMode {
-        case .lot: return "Tap the map at each property corner, then Finish."
-        case .structure: return "Tap the map at each structure corner, then Finish."
-        case .zone: return "Tap the map around the easement/zone, then Finish."
+        case .lot: return String(localized: "Tap the map at each property corner, then Finish.")
+        case .structure: return String(localized: "Tap the map at each structure corner, then Finish.")
+        case .zone: return String(localized: "Tap the map around the easement/zone, then Finish.")
         case .none: return ""
         }
     }
@@ -512,7 +512,7 @@ struct SidebarView: View {
     }
 
     private func sitePlanSlider(
-        _ label: String, value: Binding<Double>,
+        _ label: LocalizedStringKey, value: Binding<Double>,
         range: ClosedRange<Double>, step: Double, display: String
     ) -> some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -603,9 +603,9 @@ struct SidebarView: View {
 
     private func shapeName(_ s: PoolShapeKind) -> String {
         switch s {
-        case .oval: return "oval"
-        case .round: return "round"
-        case .rect: return "rectangle"
+        case .oval: return String(localized: "oval")
+        case .round: return String(localized: "round")
+        case .rect: return String(localized: "rectangle")
         }
     }
 
@@ -627,7 +627,7 @@ struct SidebarView: View {
     }
 
     private func distanceRuleRow(
-        _ label: String,
+        _ label: LocalizedStringKey,
         keyPath: WritableKeyPath<RuleProfile, Double?>,
         defaultValue: Double
     ) -> some View {
@@ -774,9 +774,11 @@ struct SidebarView: View {
 
 extension SidebarView {
     fileprivate func equipmentLine(pin: PlacedPin, check: EquipmentCheck, formatter f: UnitFormatter) -> String {
-        var line = "\(pin.kind.label): pool \(check.toPoolM.map { f.distance($0) } ?? "–")"
+        var line = String(
+            localized: "\(pin.kind.label): pool \(check.toPoolM.map { f.distance($0) } ?? "–")"
+        )
         if let toLot = check.toLotM {
-            line += ", lot \(f.distance(toLot))"
+            line += String(localized: ", lot \(f.distance(toLot))")
         }
         return line
     }

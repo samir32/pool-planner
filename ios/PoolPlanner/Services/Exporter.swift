@@ -237,12 +237,12 @@ enum Exporter {
         let rules = input.rules
 
         if report.poolCenterInsideLot == false {
-            lines.append(SummaryLine(text: "Pool is outside the property outline", pass: false))
+            lines.append(SummaryLine(text: String(localized: "Pool is outside the property outline"), pass: false))
         }
         if let setback = rules.propertyLineSetbackM, let gap = report.lotEdgeGaps.first {
             let d = gap.connector.d
             lines.append(SummaryLine(
-                text: "Property-line setback ≥ \(f.distance(setback)) — nearest \(f.distance(d))",
+                text: String(localized: "Property-line setback ≥ \(f.distance(setback)) — nearest \(f.distance(d))"),
                 pass: report.poolCenterInsideLot != false && d >= setback
             ))
         }
@@ -250,7 +250,7 @@ enum Exporter {
             let gaps = report.structureGaps.compactMap { $0?.d }
             if let d = gaps.min() {
                 lines.append(SummaryLine(
-                    text: "Structure setback ≥ \(f.distance(setback)) — nearest \(f.distance(d))",
+                    text: String(localized: "Structure setback ≥ \(f.distance(setback)) — nearest \(f.distance(d))"),
                     pass: d >= setback
                 ))
             }
@@ -259,7 +259,7 @@ enum Exporter {
             let worst = report.equipment.compactMap(\.toPoolM).min()
             if let d = worst {
                 lines.append(SummaryLine(
-                    text: "Equipment–pool clearance ≥ \(f.distance(clearance)) — nearest \(f.distance(d))",
+                    text: String(localized: "Equipment–pool clearance ≥ \(f.distance(clearance)) — nearest \(f.distance(d))"),
                     pass: !report.equipment.contains(where: \.poolViolation)
                 ))
             }
@@ -270,18 +270,18 @@ enum Exporter {
             let zone = input.scene.zones.indices.contains(i) ? input.scene.zones[i] : nil
             let limit = zone?.setbackM.map { " ≥ \(f.distance($0))" } ?? ""
             lines.append(SummaryLine(
-                text: "Zone \(i + 1) clearance\(limit) — nearest \(f.distance(d))",
+                text: String(localized: "Zone \(i + 1) clearance\(limit) — nearest \(f.distance(d))"),
                 pass: !viol
             ))
         }
         if let maxPct = rules.maxLotCoveragePct, let pct = report.coveragePct {
             lines.append(SummaryLine(
-                text: String(format: "Lot coverage ≤ %.0f%% — pool covers %.1f%%", maxPct, pct),
+                text: String(format: String(localized: "Lot coverage ≤ %.0f%% — pool covers %.1f%%"), maxPct, pct),
                 pass: !report.coverageViolation
             ))
         }
         if let area = report.lotAreaM2 {
-            lines.append(SummaryLine(text: "Lot area \(f.area(area))", pass: nil))
+            lines.append(SummaryLine(text: String(localized: "Lot area \(f.area(area))"), pass: nil))
         }
         return lines
     }
@@ -294,7 +294,7 @@ enum Exporter {
 
         let dateText = Date.now.formatted(date: .abbreviated, time: .omitted)
         let site = input.address.isEmpty ? "" : " — \(input.address)"
-        let title = "Pool Placement Plan\(site)  ·  \(dateText)"
+        let title = String(localized: "Pool Placement Plan\(site)  ·  \(dateText)")
         (title as NSString).draw(
             at: CGPoint(x: 30, y: origin.y + 18),
             withAttributes: [
@@ -308,7 +308,7 @@ enum Exporter {
             var text = line.text
             var color = UIColor.darkGray
             if let pass = line.pass {
-                text = (pass ? "PASS  " : "FAIL  ") + text
+                text = (pass ? String(localized: "PASS  ") : String(localized: "FAIL  ")) + text
                 color = pass
                     ? UIColor(red: 0.1, green: 0.5, blue: 0.15, alpha: 1)
                     : Palette.warn
@@ -323,7 +323,7 @@ enum Exporter {
             y += 34
         }
 
-        let disclaimer = "Planning aid, not a survey. Verify requirements with your local building/zoning authority."
+        let disclaimer = String(localized: "Planning aid, not a survey. Verify requirements with your local building/zoning authority.")
         (disclaimer as NSString).draw(
             at: CGPoint(x: 30, y: origin.y + height - 30),
             withAttributes: [
