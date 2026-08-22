@@ -15,6 +15,7 @@ struct PlannerView: View {
                     .ignoresSafeArea()
                 if model.poolCenter == nil {
                     Text("Double-tap the map to place the pool")
+                        .accessibilityLabel("Double-tap the map to place the pool")
                         .font(.callout.weight(.medium))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -126,11 +127,22 @@ struct SidebarView: View {
             Label("Pool", systemImage: "circle.dashed")
                 .font(.subheadline.weight(.semibold))
             Picker("Shape", selection: $model.shape) {
-                Text("Oval").tag(PoolShapeKind.oval)
-                Text("Round").tag(PoolShapeKind.round)
-                Text("Rectangle").tag(PoolShapeKind.rect)
+                Section("Above-ground") {
+                    Text("Oval").tag(PoolShapeKind.oval)
+                    Text("Round").tag(PoolShapeKind.round)
+                }
+                Section("Inground") {
+                    Text("Rectangle").tag(PoolShapeKind.rect)
+                    Text("Roman").tag(PoolShapeKind.roman)
+                    Text("Grecian").tag(PoolShapeKind.grecian)
+                    Text("Kidney").tag(PoolShapeKind.kidney)
+                    Text("Lazy L").tag(PoolShapeKind.lazyL)
+                    Text("True L").tag(PoolShapeKind.trueL)
+                    Text("Figure 8").tag(PoolShapeKind.figure8)
+                }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, alignment: .leading)
             Button {
                 model.placePoolAtMapCenter()
             } label: {
@@ -162,7 +174,7 @@ struct SidebarView: View {
 
     private var dimensionsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if model.shape == .round {
+            if model.shape.isSymmetric {
                 dimensionRow(
                     "Diameter",
                     value: $model.widthFt,
@@ -198,7 +210,7 @@ struct SidebarView: View {
     private var rotationSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Label("Rotation", systemImage: "rotate.right")
+                Label("Pool rotation", systemImage: "rotate.right")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text("\(Int(model.rotationDeg))°")
@@ -206,8 +218,8 @@ struct SidebarView: View {
                     .foregroundStyle(.secondary)
             }
             Slider(value: $model.rotationDeg, in: 0...180, step: 1)
-                .disabled(model.shape == .round)
-            Text("Tip: two-finger twist on the pool rotates it too.")
+                .disabled(model.shape.isSymmetric)
+            Text("Drag the pool on the map to move it. Two-finger twist on the pool also rotates it.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
@@ -279,6 +291,11 @@ struct SidebarView: View {
                 .buttonStyle(.borderless)
                 .font(.footnote)
                 zoneList
+                if model.lot.count >= 3 || !model.structures.isEmpty || !model.zones.isEmpty {
+                    Text("Drag any corner on the map to adjust an outline.")
+                        .font(.footnote)
+                        .foregroundStyle(.tertiary)
+                }
             } else {
                 Text(drawModeHint)
                     .font(.footnote)
@@ -296,9 +313,9 @@ struct SidebarView: View {
 
     private var drawModeHint: String {
         switch model.drawMode {
-        case .lot: return String(localized: "Tap the map at each property corner, then Finish.")
-        case .structure: return String(localized: "Tap the map at each structure corner, then Finish.")
-        case .zone: return String(localized: "Tap the map around the easement/zone, then Finish.")
+        case .lot: return String(localized: "Tap each property corner. Tap the first corner again to close.")
+        case .structure: return String(localized: "Tap each structure corner. Tap the first corner again to close.")
+        case .zone: return String(localized: "Tap around the easement/zone. Tap the first corner again to close.")
         case .none: return ""
         }
     }
@@ -388,7 +405,7 @@ struct SidebarView: View {
                 .font(.callout)
             }
             if !model.pins.isEmpty {
-                Text("Drag a pin on the map to reposition it.")
+                Text("Drag a pin on the map to move it.")
                     .font(.footnote)
                     .foregroundStyle(.tertiary)
             }
@@ -608,6 +625,12 @@ struct SidebarView: View {
         case .oval: return String(localized: "oval")
         case .round: return String(localized: "round")
         case .rect: return String(localized: "rectangle")
+        case .roman: return String(localized: "Roman")
+        case .grecian: return String(localized: "Grecian")
+        case .kidney: return String(localized: "kidney")
+        case .lazyL: return String(localized: "lazy L")
+        case .trueL: return String(localized: "true L")
+        case .figure8: return String(localized: "figure 8")
         }
     }
 

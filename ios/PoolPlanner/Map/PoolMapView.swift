@@ -234,6 +234,9 @@ struct PoolMapView: UIViewRepresentable {
         map.isPitchEnabled = false
         map.showsCompass = false
         map.showsUserLocation = true
+        // Apple's satellite tiles stop well short of what pool-scale editing
+        // needs; let the camera go closer even though imagery interpolates.
+        map.cameraZoomRange = MKMapView.CameraZoomRange(minCenterCoordinateDistance: 25)
         map.delegate = context.coordinator
         // Somewhere reasonable until location/search arrives (continental view).
         map.setRegion(
@@ -256,10 +259,18 @@ struct PoolMapView: UIViewRepresentable {
         private let model: PlannerModel
         private var lastCameraID: UUID?
         private var lastPlaceToken: UUID?
+        private var cameraRetries = 0
         private var rotateStartDeg: Double?
-        private let handleAnnotation = MKPointAnnotation()
-        private var handleOnMap = false
         private var draggingAnnotation = false
+
+        /// What a one-finger drag is currently moving. Nothing here means the
+        /// gesture never started and the map pans normally.
+        private enum DragTarget {
+            case pool
+            case vertex(kind: VertexAnnotation.Kind, polygon: Int, vertex: Int)
+            case pin(UUID)
+        }
+        private var dragTarget: DragTarget?
 
         private var lastScene: MapScene?
         private var sceneOverlays: [MKOverlay] = []
@@ -285,9 +296,90 @@ struct PoolMapView: UIViewRepresentable {
             singleTap.delegate = self
             map.addGestureRecognizer(singleTap)
 
+            let drag = UIPanGestureRecognizer(target: self, action: #selector(handleDrag(_:)))
+            drag.maximumNumberOfTouches = 1
+            drag.delegate = self
+            map.addGestureRecognizer(drag)
+
             let rotate = UIRotationGestureRecognizer(target: self, action: #selector(handleRotate(_:)))
             rotate.delegate = self
             map.addGestureRecognizer(rotate)
+        }
+
+        // MARK: direct manipulation
+
+        /// Hit-test in screen space, smallest targets first so a vertex sitting
+        /// on the pool edge still wins.
+        private func target(at pt: CGPoint, on map: MKMapView) -> DragTarget? {
+            guard !model.cleanView, model.drawMode == .none, !model.measureMode else { return nil }
+            let grab: CGFloat = 34
+
+            func screen(_ ll: LatLng) -> CGPoint {
+                map.convert(CLLocationCoordinate2D(latitude: ll.lat, longitude: ll.lng), toPointTo: map)
+            }
+
+            var best: (d: CGFloat, target: DragTarget)?
+            func consider(_ ll: LatLng, _ t: DragTarget) {
+                let p = screen(ll)
+                let d = hypot(p.x - pt.x, p.y - pt.y)
+                if d <= grab, best == nil || d < best!.d { best = (d, t) }
+            }
+
+            for (i, v) in model.lot.enumerated() {
+                consider(v, .vertex(kind: .lot, polygon: 0, vertex: i))
+            }
+            for (si, poly) in model.structures.enumerated() {
+                for (i, v) in poly.enumerated() {
+                    consider(v, .vertex(kind: .structure, polygon: si, vertex: i))
+                }
+            }
+            for (zi, zone) in model.zones.enumerated() {
+                for (i, v) in zone.points.enumerated() {
+                    consider(v, .vertex(kind: .zone, polygon: zi, vertex: i))
+                }
+            }
+            for pin in model.pins {
+                consider(pin.position, .pin(pin.id))
+            }
+            if let best { return best.target }
+
+            // otherwise: anywhere on the pool body moves the pool
+            if let ring = model.poolRing {
+                let screenRing = ring.map { p -> XY in
+                    let s = screen(p); return XY(x: s.x, y: s.y)
+                }
+                if Geo.pointInPoly(XY(x: pt.x, y: pt.y), screenRing) { return .pool }
+                for i in 0..<screenRing.count where Geo.distPointSeg(
+                    XY(x: pt.x, y: pt.y), screenRing[i], screenRing[(i + 1) % screenRing.count]
+                ) < 22 {
+                    return .pool
+                }
+            }
+            return nil
+        }
+
+        @objc private func handleDrag(_ g: UIPanGestureRecognizer) {
+            guard let map = g.view as? MKMapView else { return }
+            switch g.state {
+            case .began:
+                model.beginInteractiveEdit()
+                map.isScrollEnabled = false
+            case .changed:
+                guard let target = dragTarget else { return }
+                let coord = map.convert(g.location(in: map), toCoordinateFrom: map)
+                let ll = LatLng(lat: coord.latitude, lng: coord.longitude)
+                switch target {
+                case .pool:
+                    model.movePool(to: ll)
+                case let .vertex(kind, polygon, vertex):
+                    model.moveVertex(kind: kind, polygonIndex: polygon, vertexIndex: vertex, to: ll)
+                case let .pin(id):
+                    model.movePin(id: id, to: ll)
+                }
+            default:
+                dragTarget = nil
+                map.isScrollEnabled = true
+            }
         }
 
         private func requireFailure(of recognizer: UITapGestureRecognizer, inSubviewsOf view: UIView) {
@@ -303,7 +395,10 @@ struct PoolMapView: UIViewRepresentable {
 
         @objc private func handleDoubleTap(_ g: UITapGestureRecognizer) {
             guard g.state == .ended, let map = g.view as? MKMapView else { return }
-            guard model.drawMode == .none, !model.measureMode else { return }
+            // Only for the very first placement — once a pool exists it is
+            // moved by dragging it, and a stray double-tap teleporting it is
+            // worse than useless.
+            guard model.drawMode == .none, !model.measureMode, model.poolCenter == nil else { return }
             let coord = map.convert(g.location(in: map), toCoordinateFrom: map)
             model.setPoolCenter(LatLng(lat: coord.latitude, lng: coord.longitude))
         }
@@ -317,6 +412,17 @@ struct PoolMapView: UIViewRepresentable {
                 let (snappedLL, didSnap) = snap(ll, tapPoint: pt, on: map)
                 model.addMeasurePoint(snappedLL, snapped: didSnap)
             } else if model.drawMode != .none {
+                // Tapping the first corner closes the outline and finishes,
+                // instead of making the user reach for the Finish button.
+                if let first = model.draftPoints.first, model.draftPoints.count >= 3 {
+                    let firstPt = map.convert(
+                        CLLocationCoordinate2D(latitude: first.lat, longitude: first.lng), toPointTo: map)
+                    if hypot(firstPt.x - pt.x, firstPt.y - pt.y) < 28 {
+                        model.finishDraw()
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        return
+                    }
+                }
                 model.addDraftPoint(ll)
             }
         }
@@ -383,6 +489,9 @@ struct PoolMapView: UIViewRepresentable {
                 switch g {
                 case is UITapGestureRecognizer:
                     return true
+                case is UIPanGestureRecognizer:
+                    dragTarget = target(at: g.location(in: map), on: map)
+                    return dragTarget != nil
                 case is UIRotationGestureRecognizer:
                     return isPoint(g.location(in: map), insidePoolOn: map, slopPt: 80)
                 default:
@@ -435,16 +544,26 @@ struct PoolMapView: UIViewRepresentable {
             }
             syncTileOverlay(map: map)
             if let req = model.cameraRequest, req.id != lastCameraID {
-                lastCameraID = req.id
-                let region = MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: req.center.lat, longitude: req.center.lng),
-                    latitudinalMeters: req.spanMeters,
-                    longitudinalMeters: req.spanMeters
-                )
-                map.setRegion(region, animated: true)
+                // setRegion on a not-yet-laid-out map silently does nothing, so
+                // hold the request and retry until the view has real bounds —
+                // otherwise a restored project opens at continental zoom.
+                if map.bounds.width > 1 {
+                    lastCameraID = req.id
+                    cameraRetries = 0
+                    let center = CLLocationCoordinate2D(latitude: req.center.lat, longitude: req.center.lng)
+                    map.setCamera(
+                        MKMapCamera(lookingAtCenter: center, fromDistance: req.cameraDistanceM, pitch: 0, heading: 0),
+                        animated: true
+                    )
+                } else if cameraRetries < 40 {
+                    cameraRetries += 1
+                    DispatchQueue.main.async { [weak self, weak map] in
+                        guard let self, let map else { return }
+                        self.sync(map: map)
+                    }
+                }
             }
             rebuildScene(map: map)
-            syncHandle(map: map)
         }
 
         private func rebuildScene(map: MKMapView) {
@@ -567,23 +686,6 @@ struct PoolMapView: UIViewRepresentable {
             }
         }
 
-        private func syncHandle(map: MKMapView) {
-            guard let center = model.poolCenter, !model.cleanView else {
-                if handleOnMap {
-                    map.removeAnnotation(handleAnnotation)
-                    handleOnMap = false
-                }
-                return
-            }
-            if !draggingAnnotation {
-                handleAnnotation.coordinate = CLLocationCoordinate2D(latitude: center.lat, longitude: center.lng)
-            }
-            if !handleOnMap {
-                map.addAnnotation(handleAnnotation)
-                handleOnMap = true
-            }
-        }
-
         // MARK: annotation views
 
         nonisolated func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -600,8 +702,6 @@ struct PoolMapView: UIViewRepresentable {
                     return Self.pinView(for: p, on: mapView)
                 case let m as MeasureDotAnnotation:
                     return Self.measureDotView(for: m, on: mapView)
-                case is MKPointAnnotation:
-                    return Self.poolHandleView(for: annotation, on: mapView)
                 default:
                     return nil
                 }
@@ -631,14 +731,6 @@ struct PoolMapView: UIViewRepresentable {
             }
         }
 
-        private static func poolHandleView(for annotation: MKAnnotation, on map: MKMapView) -> MKAnnotationView {
-            let view = dequeue("poolHandle", for: annotation, on: map)
-            view.isDraggable = true
-            // 44 pt touch target with a 20 pt visible handle.
-            view.image = circleImage(diameter: 20, pad: 12, fill: UIColor(white: 1, alpha: 0.9), core: Palette.poolStroke)
-            return view
-        }
-
         private static func vertexView(for annotation: VertexAnnotation, on map: MKMapView) -> MKAnnotationView {
             let id: String
             let color: UIColor
@@ -648,7 +740,7 @@ struct PoolMapView: UIViewRepresentable {
             case .zone: id = "zoneVertex"; color = Palette.zone
             }
             let view = dequeue(id, for: annotation, on: map)
-            view.isDraggable = true
+            view.isDraggable = false
             view.image = circleImage(diameter: 14, pad: 15, fill: .white, core: color)
             return view
         }
@@ -662,7 +754,7 @@ struct PoolMapView: UIViewRepresentable {
 
         private static func pinView(for annotation: PinAnnotation, on map: MKMapView) -> MKAnnotationView {
             let view = dequeue("pin-\(annotation.kind.rawValue)", for: annotation, on: map)
-            view.isDraggable = true
+            view.isDraggable = false
             let color = annotation.kind.measured ? Palette.ink : Palette.snap
             let side: CGFloat = 44 // touch target; visible badge is 28 pt
             view.image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { ctx in
@@ -726,43 +818,6 @@ struct PoolMapView: UIViewRepresentable {
                 )
             }
             return view
-        }
-
-        // MARK: dragging
-
-        nonisolated func mapView(
-            _ mapView: MKMapView,
-            annotationView view: MKAnnotationView,
-            didChange newState: MKAnnotationView.DragState,
-            fromOldState oldState: MKAnnotationView.DragState
-        ) {
-            MainActor.assumeIsolated {
-                switch newState {
-                case .starting, .dragging:
-                    draggingAnnotation = true
-                case .ending, .canceling, .none:
-                    let wasDragging = draggingAnnotation
-                    draggingAnnotation = false
-                    view.dragState = .none
-                    guard wasDragging, let annotation = view.annotation else { return }
-                    let coord = annotation.coordinate
-                    let p = LatLng(lat: coord.latitude, lng: coord.longitude)
-                    if let vertex = annotation as? VertexAnnotation {
-                        model.moveVertex(
-                            kind: vertex.kind,
-                            polygonIndex: vertex.polygonIndex,
-                            vertexIndex: vertex.vertexIndex,
-                            to: p
-                        )
-                    } else if let pin = annotation as? PinAnnotation {
-                        model.movePin(id: pin.pinID, to: p)
-                    } else if annotation === handleAnnotation {
-                        model.setPoolCenter(p)
-                    }
-                default:
-                    break
-                }
-            }
         }
 
         // MARK: overlay renderers

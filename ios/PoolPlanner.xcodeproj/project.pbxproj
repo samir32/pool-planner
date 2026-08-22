@@ -20,6 +20,7 @@
 		A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E76699CF3214F7DC672E9 /* UnitFormatter.swift */; };
 		A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */; };
 		A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */; };
+		A6A4D7EA54FA4E0A7FF6BC17 /* PoolShapeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1032C56160B95D0F55EE3275 /* PoolShapeTests.swift */; };
 		B1739C808CBEFE2CD65D537C /* gen-fixtures.mjs in Resources */ = {isa = PBXBuildFile; fileRef = C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */; };
 		C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */; };
 		C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */; };
@@ -42,6 +43,7 @@
 
 /* Begin PBXFileReference section */
 		043FFCD013081919AB5F5CE4 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		1032C56160B95D0F55EE3275 /* PoolShapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolShapeTests.swift; sourceTree = "<group>"; };
 		16F01C17C59057593070CDA6 /* GeometryCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryCore.swift; sourceTree = "<group>"; };
 		19D5D1C5E50414258885F4EA /* parity.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = parity.json; sourceTree = "<group>"; };
 		1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStateTests.swift; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 			children = (
 				FEDE0B3CE791D6490AAC165D /* ComplianceEngineTests.swift */,
 				9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */,
+				1032C56160B95D0F55EE3275 /* PoolShapeTests.swift */,
 				1E68C51CF6DA8D5E0A500C07 /* ProjectStateTests.swift */,
 				8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */,
 				7B8FFAD3B3361CCC7EDCE473 /* Fixtures */,
@@ -302,6 +305,7 @@
 			files = (
 				CDE04E062EC8CD38D49A2193 /* ComplianceEngineTests.swift in Sources */,
 				C6322091BE6EE8C34C501088 /* GeometryParityTests.swift in Sources */,
+				A6A4D7EA54FA4E0A7FF6BC17 /* PoolShapeTests.swift in Sources */,
 				246B45C3A6ECAA6CF4214501 /* ProjectStateTests.swift in Sources */,
 				C0FC3E17962C6CC6321C313A /* UnitFormatterTests.swift in Sources */,
 			);

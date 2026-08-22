@@ -2279,6 +2279,295 @@
           }
         }
       }
+    },
+    "Pool rotation": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotation de la piscine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotación de la piscina"
+          }
+        }
+      }
+    },
+    "Drag the pool on the map to move it. Two-finger twist on the pool also rotates it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser la piscine sur la carte pour la déplacer. Une rotation à deux doigts la fait pivoter."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastre la piscina en el mapa para moverla. Gire con dos dedos para rotarla."
+          }
+        }
+      }
+    },
+    "Drag a pin on the map to move it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser un repère sur la carte pour le déplacer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastre un marcador en el mapa para moverlo."
+          }
+        }
+      }
+    },
+    "Drag any corner on the map to adjust an outline.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faites glisser un coin sur la carte pour ajuster un contour."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastre cualquier esquina en el mapa para ajustar un contorno."
+          }
+        }
+      }
+    },
+    "Tap each property corner. Tap the first corner again to close.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez chaque coin du terrain. Touchez le premier coin pour fermer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque cada esquina del terreno. Toque la primera esquina para cerrar."
+          }
+        }
+      }
+    },
+    "Tap each structure corner. Tap the first corner again to close.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez chaque coin du bâtiment. Touchez le premier coin pour fermer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque cada esquina de la edificación. Toque la primera esquina para cerrar."
+          }
+        }
+      }
+    },
+    "Tap around the easement/zone. Tap the first corner again to close.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez le pourtour de la servitude/zone. Touchez le premier coin pour fermer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque el contorno de la servidumbre/zona. Toque la primera esquina para cerrar."
+          }
+        }
+      }
+    },
+    "Roman": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Romaine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Romana"
+          }
+        }
+      }
+    },
+    "Grecian": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grecque"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Griega"
+          }
+        }
+      }
+    },
+    "Kidney": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haricot"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riñón"
+          }
+        }
+      }
+    },
+    "kidney": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "haricot"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "riñón"
+          }
+        }
+      }
+    },
+    "Lazy L": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L adouci"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L suave"
+          }
+        }
+      }
+    },
+    "lazy L": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L adouci"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L suave"
+          }
+        }
+      }
+    },
+    "True L": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L droit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L recta"
+          }
+        }
+      }
+    },
+    "true L": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L droit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L recta"
+          }
+        }
+      }
+    },
+    "Figure 8": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Huit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocho"
+          }
+        }
+      }
+    },
+    "figure 8": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "huit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ocho"
+          }
+        }
+      }
     }
   }
 }

@@ -27,6 +27,16 @@ struct PoolPreset: Identifiable {
         PoolPreset(name: "16 × 32 ft rectangle", shape: .rect, widthFt: 16, lengthFt: 32),
         PoolPreset(name: "18 × 36 ft rectangle", shape: .rect, widthFt: 18, lengthFt: 36),
         PoolPreset(name: "20 × 40 ft rectangle", shape: .rect, widthFt: 20, lengthFt: 40),
+        PoolPreset(name: "16 × 32 ft Roman", shape: .roman, widthFt: 16, lengthFt: 32),
+        PoolPreset(name: "18 × 36 ft Roman", shape: .roman, widthFt: 18, lengthFt: 36),
+        PoolPreset(name: "16 × 32 ft Grecian", shape: .grecian, widthFt: 16, lengthFt: 32),
+        PoolPreset(name: "18 × 36 ft Grecian", shape: .grecian, widthFt: 18, lengthFt: 36),
+        PoolPreset(name: "16 × 32 ft kidney", shape: .kidney, widthFt: 16, lengthFt: 32),
+        PoolPreset(name: "18 × 36 ft kidney", shape: .kidney, widthFt: 18, lengthFt: 36),
+        PoolPreset(name: "17 × 37 ft lazy L", shape: .lazyL, widthFt: 17, lengthFt: 37),
+        PoolPreset(name: "20 × 43 ft lazy L", shape: .lazyL, widthFt: 20, lengthFt: 43),
+        PoolPreset(name: "16 × 36 ft true L", shape: .trueL, widthFt: 16, lengthFt: 36),
+        PoolPreset(name: "18 × 36 ft figure 8", shape: .figure8, widthFt: 18, lengthFt: 36),
     ]
 }
 
@@ -34,7 +44,9 @@ struct PoolPreset: Identifiable {
 final class PlannerModel: NSObject, ObservableObject {
     struct CameraRequest: Equatable {
         var center: LatLng
-        var spanMeters: Double
+        /// Camera altitude in meters. setRegion clamps hard on satellite tiles,
+        /// so the map uses setCamera with this distance instead.
+        var cameraDistanceM: Double
         var id = UUID()
     }
 
@@ -47,10 +59,10 @@ final class PlannerModel: NSObject, ObservableObject {
 
     @Published var poolCenter: LatLng?
     @Published var shape: PoolShapeKind = .oval {
-        didSet { if shape == .round { lengthFt = widthFt } }
+        didSet { if shape.isSymmetric { lengthFt = widthFt } }
     }
     @Published var widthFt: Double = 15 {
-        didSet { if shape == .round, lengthFt != widthFt { lengthFt = widthFt } }
+        didSet { if shape.isSymmetric, lengthFt != widthFt { lengthFt = widthFt } }
     }
     @Published var lengthFt: Double = 30
     /// 0–180° like the web app (shapes are symmetric).
@@ -114,7 +126,7 @@ final class PlannerModel: NSObject, ObservableObject {
         if let saved = store.load() {
             apply(state: saved)
             if let center = poolCenter {
-                cameraRequest = CameraRequest(center: center, spanMeters: 150)
+                cameraRequest = CameraRequest(center: center, cameraDistanceM: 150)
                 tookFirstFix = true // don't yank the camera to the user's location
             }
         }
@@ -227,6 +239,12 @@ final class PlannerModel: NSObject, ObservableObject {
         case .oval: shapeWord = String(localized: "oval")
         case .round: shapeWord = String(localized: "round")
         case .rect: shapeWord = String(localized: "rectangle")
+        case .roman: shapeWord = String(localized: "Roman")
+        case .grecian: shapeWord = String(localized: "Grecian")
+        case .kidney: shapeWord = String(localized: "kidney")
+        case .lazyL: shapeWord = String(localized: "lazy L")
+        case .trueL: shapeWord = String(localized: "true L")
+        case .figure8: shapeWord = String(localized: "figure 8")
         }
         return String(
             localized: "Pool: \(f.poolDimension(widthFt * Geo.metersPerFoot)) × \(f.poolDimension(lengthFt * Geo.metersPerFoot)) \(shapeWord) — water area \(f.area(footprintM2))"
@@ -442,7 +460,6 @@ final class PlannerModel: NSObject, ObservableObject {
 
     func movePin(id: UUID, to p: LatLng) {
         guard let i = pins.firstIndex(where: { $0.id == id }) else { return }
-        recordUndo()
         pins[i].position = p
     }
 
@@ -536,7 +553,7 @@ final class PlannerModel: NSObject, ObservableObject {
         rules = scenario.rules
         if let center = scenario.center {
             poolCenter = center
-            cameraRequest = CameraRequest(center: center, spanMeters: 150)
+            cameraRequest = CameraRequest(center: center, cameraDistanceM: 150)
         }
     }
 
@@ -545,23 +562,39 @@ final class PlannerModel: NSObject, ObservableObject {
         scenarios.removeAll { $0.id == id }
     }
 
+    /// Live vertex move during a drag. Undo is snapshotted once by
+    /// `beginInteractiveEdit()` when the gesture starts.
     func moveVertex(kind: VertexAnnotation.Kind, polygonIndex: Int, vertexIndex: Int, to p: LatLng) {
         switch kind {
         case .lot:
             guard lot.indices.contains(vertexIndex) else { return }
-            recordUndo()
             lot[vertexIndex] = p
         case .structure:
             guard structures.indices.contains(polygonIndex),
                   structures[polygonIndex].indices.contains(vertexIndex) else { return }
-            recordUndo()
             structures[polygonIndex][vertexIndex] = p
         case .zone:
             guard zones.indices.contains(polygonIndex),
                   zones[polygonIndex].points.indices.contains(vertexIndex) else { return }
-            recordUndo()
             zones[polygonIndex].points[vertexIndex] = p
         }
+    }
+
+    /// Snapshot state once at the start of a direct-manipulation gesture.
+    func beginInteractiveEdit() {
+        recordUndo()
+    }
+
+    /// Live pool move during a drag (no undo snapshot — see above).
+    func movePool(to p: LatLng) {
+        poolCenter = p
+    }
+
+    /// True when the draft polygon is closed by tapping its first corner.
+    func draftClosesLoop(at p: LatLng, within meters: Double) -> Bool {
+        guard draftPoints.count >= 3, let first = draftPoints.first else { return false }
+        let d = Geo.llToXY(p, ref: first)
+        return (d.x * d.x + d.y * d.y).squareRoot() <= meters
     }
 
     func setPoolCenter(_ p: LatLng) {
@@ -609,7 +642,7 @@ final class PlannerModel: NSObject, ObservableObject {
                 if let loc = placemarks?.first?.location {
                     self.cameraRequest = CameraRequest(
                         center: LatLng(lat: loc.coordinate.latitude, lng: loc.coordinate.longitude),
-                        spanMeters: 150
+                        cameraDistanceM: 150
                     )
                 } else {
                     self.searchError = error == nil
@@ -638,7 +671,7 @@ extension PlannerModel: CLLocationManagerDelegate {
             self.tookFirstFix = true
             self.cameraRequest = CameraRequest(
                 center: LatLng(lat: loc.coordinate.latitude, lng: loc.coordinate.longitude),
-                spanMeters: 200
+                cameraDistanceM: 200
             )
         }
     }
