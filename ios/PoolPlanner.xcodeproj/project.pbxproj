@@ -16,6 +16,7 @@
 		684251B92EA48ED0AD741A30 /* PoolPlannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768E9036DEFEEC981DE43C72 /* PoolPlannerApp.swift */; };
 		86B478F69D8FD3CDB2DACF5F /* GeometryCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F01C17C59057593070CDA6 /* GeometryCore.swift */; };
 		8EF3B55710C48D70138FB496 /* SitePlanOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86796454AA6733B84AB60759 /* SitePlanOverlay.swift */; };
+		94C056776455E9913BAE2117 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 96AB7303DC9FF198D8AE83A2 /* Assets.xcassets */; };
 		A195471AE8A434501D74C53F /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 902E76699CF3214F7DC672E9 /* UnitFormatter.swift */; };
 		A1B6C038DE1FA2591318E5D3 /* ComplianceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C7542B9B03EE52B0E4602E /* ComplianceEngine.swift */; };
 		A43B2BC00C32490ED70540E2 /* ProjectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17DF74AE5761AC4EDFA0791 /* ProjectState.swift */; };
@@ -53,8 +54,10 @@
 		87E3649297B3B6F0E6E37D21 /* PlannerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerModel.swift; sourceTree = "<group>"; };
 		8D8EF731BF79773673ACD713 /* UnitFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatterTests.swift; sourceTree = "<group>"; };
 		902E76699CF3214F7DC672E9 /* UnitFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatter.swift; sourceTree = "<group>"; };
+		96AB7303DC9FF198D8AE83A2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		96B2E8115E1336954AB9E65C /* PoolMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolMapView.swift; sourceTree = "<group>"; };
 		9B54B7C7C22E5FA4CFB18BE9 /* GeometryParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryParityTests.swift; sourceTree = "<group>"; };
+		A0C5B12446A370F6917CC764 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BD58E7E21213DA39C0E61E11 /* PoolShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolShape.swift; sourceTree = "<group>"; };
 		C3C81F6ACA6CD8DD6738EEDD /* gen-fixtures.mjs */ = {isa = PBXFileReference; path = "gen-fixtures.mjs"; sourceTree = "<group>"; };
 		C4286AA38C3D984AF276A299 /* Exporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exporter.swift; sourceTree = "<group>"; };
@@ -117,6 +120,8 @@
 		5ACA25E268D2FC931C502434 /* PoolPlanner */ = {
 			isa = PBXGroup;
 			children = (
+				96AB7303DC9FF198D8AE83A2 /* Assets.xcassets */,
+				A0C5B12446A370F6917CC764 /* Info.plist */,
 				043FFCD013081919AB5F5CE4 /* Localizable.xcstrings */,
 				54A960B2E34820ADD0965241 /* App */,
 				3312D119FED8C99574402036 /* Geometry */,
@@ -254,6 +259,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94C056776455E9913BAE2117 /* Assets.xcassets in Resources */,
 				D0357FF27D4492674414C0C8 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -336,10 +342,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location starts the map near your property. Nothing is stored or shared.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = PoolPlanner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -438,10 +441,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location starts the map near your property. Nothing is stored or shared.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = PoolPlanner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
