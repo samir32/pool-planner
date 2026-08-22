@@ -112,6 +112,8 @@ struct ProjectState: Codable, Equatable {
     // Optional so project.json written by older builds still decodes.
     var zones: [BoundaryZone]?
     var customTileTemplate: String?
+    /// Rule profiles saved by name, reusable across projects.
+    var savedProfiles: [RuleProfile]?
 }
 
 /// Loads/saves the project as JSON in the app's Documents directory.

@@ -16,7 +16,7 @@ targets:
     platform: iOS
     sources:
       - PoolPlanner
-    knownRegions: [en, fr, Base]
+    knownRegions: [en, fr, es, Base]
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "2"

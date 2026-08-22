@@ -19,6 +19,9 @@ struct MapScene: Equatable {
     }
 
     var poolRing: [LatLng]?
+    /// Wall/coping edge the setbacks are measured from; nil when it equals
+    /// the water ring.
+    var measurementRing: [LatLng]?
     var lot: [LatLng]
     var lotViolating: Bool
     var structures: [[LatLng]]
@@ -83,7 +86,7 @@ extension PlannerModel {
             }
             // Equipment connectors (web refreshEquip): pin → nearest pool wall
             // point, and pin → nearest lot line point when a lot is drawn.
-            if let ring = poolRing {
+            if let ring = measurementRing {
                 let poolXY = ring.map { Geo.llToXY($0, ref: ref) }
                 let lotXY = lot.count >= 3 ? lot.map { Geo.llToXY($0, ref: ref) } : nil
                 for (i, pin) in measuredPins.enumerated() {
@@ -110,6 +113,7 @@ extension PlannerModel {
 
         return MapScene(
             poolRing: poolRing,
+            measurementRing: rules.measurementInsetM > 0 ? measurementRing : nil,
             lot: lot,
             lotViolating: lotViolating,
             structures: structures,
@@ -470,6 +474,7 @@ struct PoolMapView: UIViewRepresentable {
                 sceneOverlays.append(SitePlanOverlay(params: params, image: image))
             }
             if let ring = scene.poolRing { addPolygon(ring, title: "pool") }
+            if let wall = scene.measurementRing { addPolyline(wall + wall.prefix(1), title: "wall") }
             func addVertices(_ ring: [LatLng], kind: VertexAnnotation.Kind, polygonIndex: Int) {
                 guard !scene.cleanView else { return }
                 for (i, p) in ring.enumerated() {
@@ -828,6 +833,9 @@ struct PoolMapView: UIViewRepresentable {
                 case "connZone":
                     r.strokeColor = Palette.zone
                     r.lineDashPattern = [6, 4]
+                case "wall":
+                    r.strokeColor = Palette.poolStroke
+                    r.lineDashPattern = [4, 4]
                 case "measure":
                     r.strokeColor = Palette.measure
                     r.lineWidth = 3

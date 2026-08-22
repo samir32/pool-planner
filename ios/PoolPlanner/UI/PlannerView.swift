@@ -50,6 +50,8 @@ struct SidebarView: View {
     @ObservedObject var model: PlannerModel
     @State private var scenarioName = ""
     @State private var photoItem: PhotosPickerItem?
+    @State private var profileName = ""
+    @State private var showProfileNameField = false
     @State private var showFileImporter = false
 
     var body: some View {
@@ -618,11 +620,91 @@ struct SidebarView: View {
             Text("Example values — verify with your municipality.")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
+            profileControls
+            measurementReferenceControls
             distanceRuleRow("Property-line setback", keyPath: \.propertyLineSetbackM, defaultValue: 1.5)
             distanceRuleRow("Structure setback", keyPath: \.structureSetbackM, defaultValue: 1.5)
             distanceRuleRow("Equipment–pool clearance", keyPath: \.equipmentPoolClearanceM, defaultValue: 1.0)
             distanceRuleRow("Equipment–lot setback", keyPath: \.equipmentLotSetbackM, defaultValue: 1.5)
             coverageRuleRow
+        }
+    }
+
+    @ViewBuilder
+    private var profileControls: some View {
+        HStack {
+            Menu {
+                if model.savedProfiles.isEmpty {
+                    Text("No saved profiles")
+                } else {
+                    ForEach(model.savedProfiles, id: \.name) { profile in
+                        Button(profile.name) { model.loadRuleProfile(profile) }
+                    }
+                    Divider()
+                    ForEach(model.savedProfiles, id: \.name) { profile in
+                        Button(role: .destructive) {
+                            model.removeRuleProfile(named: profile.name)
+                        } label: {
+                            Label("Delete \(profile.name)", systemImage: "trash")
+                        }
+                    }
+                }
+            } label: {
+                Label("Profiles", systemImage: "folder")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            Button("Save as…") { showProfileNameField = true }
+                .buttonStyle(.bordered)
+        }
+        if showProfileNameField {
+            HStack {
+                TextField("Profile name…", text: $profileName)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { saveProfile() }
+                Button("Save") { saveProfile() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(profileName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+    }
+
+    private func saveProfile() {
+        model.saveRuleProfile(named: profileName)
+        profileName = ""
+        showProfileNameField = false
+    }
+
+    @ViewBuilder
+    private var measurementReferenceControls: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Measure setbacks to")
+                .font(.callout)
+            Picker("Measure setbacks to", selection: $model.rules.setbackReference) {
+                Text("Water's edge").tag(RuleProfile.SetbackReference.waterEdge)
+                Text("Pool wall").tag(RuleProfile.SetbackReference.poolWall)
+            }
+            .pickerStyle(.segmented)
+            if model.rules.setbackReference == .poolWall {
+                HStack {
+                    Text("Wall / coping width")
+                    Spacer()
+                    Text(model.formatter.distance(model.rules.copingWidthM ?? 0))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .font(.callout)
+                Slider(
+                    value: Binding(
+                        get: { model.rules.copingWidthM ?? 0 },
+                        set: { model.rules.copingWidthM = $0 }
+                    ),
+                    in: 0...1.5, step: 0.05
+                )
+                Text("Setbacks are measured from this much outside the water line.")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 

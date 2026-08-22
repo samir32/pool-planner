@@ -233,6 +233,7 @@
 			knownRegions = (
 				Base,
 				en,
+				es,
 				fr,
 			);
 			mainGroup = B7CAD7747798418706CA2A6C;

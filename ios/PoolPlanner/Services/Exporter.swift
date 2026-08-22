@@ -113,6 +113,16 @@ enum Exporter {
         if let ring = scene.poolRing {
             strokePolygon(ring, stroke: Palette.poolStroke, fill: Palette.poolFill)
         }
+        if let wall = scene.measurementRing, wall.count >= 3 {
+            let path = UIBezierPath()
+            path.move(to: pt(wall[0]))
+            for p in wall.dropFirst() { path.addLine(to: pt(p)) }
+            path.close()
+            path.lineWidth = 2
+            path.setLineDash([6, 5], count: 2, phase: 0)
+            Palette.poolStroke.setStroke()
+            path.stroke()
+        }
 
         for c in scene.connectors {
             let color: UIColor

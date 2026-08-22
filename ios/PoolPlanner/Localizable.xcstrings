@@ -10,6 +10,12 @@
             "state": "translated",
             "value": "Planificateur de piscine"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planificador de piscinas"
+          }
         }
       }
     },
@@ -20,6 +26,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Outil de planification, pas un certificat de localisation. Vérifiez les exigences auprès de votre service d'urbanisme."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herramienta de planificación, no un levantamiento topográfico. Verifique los requisitos con su autoridad local de urbanismo."
           }
         }
       }
@@ -32,6 +44,12 @@
             "state": "translated",
             "value": "Adresse"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dirección"
+          }
         }
       }
     },
@@ -42,6 +60,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rechercher une adresse…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar dirección…"
           }
         }
       }
@@ -54,6 +78,12 @@
             "state": "translated",
             "value": "Aller"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ir"
+          }
         }
       }
     },
@@ -64,6 +94,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adresse introuvable"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dirección no encontrada"
           }
         }
       }
@@ -76,6 +112,12 @@
             "state": "translated",
             "value": "Échec de la recherche d'adresse"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al buscar la dirección"
+          }
         }
       }
     },
@@ -86,6 +128,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Piscine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscina"
           }
         }
       }
@@ -98,6 +146,12 @@
             "state": "translated",
             "value": "Forme"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forma"
+          }
         }
       }
     },
@@ -108,6 +162,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ovale"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ovalada"
           }
         }
       }
@@ -120,6 +180,12 @@
             "state": "translated",
             "value": "Ronde"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redonda"
+          }
         }
       }
     },
@@ -130,6 +196,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rectangulaire"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rectangular"
           }
         }
       }
@@ -142,6 +214,12 @@
             "state": "translated",
             "value": "Placer la piscine au centre"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colocar la piscina en el centro"
+          }
         }
       }
     },
@@ -152,6 +230,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Déplacer la piscine au centre"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mover la piscina al centro"
           }
         }
       }
@@ -164,6 +248,12 @@
             "state": "translated",
             "value": "Modèles"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelos"
+          }
         }
       }
     },
@@ -174,6 +264,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hors-terre"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobre suelo"
           }
         }
       }
@@ -186,6 +282,12 @@
             "state": "translated",
             "value": "Creusée"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enterrada"
+          }
         }
       }
     },
@@ -196,6 +298,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Diamètre"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diámetro"
           }
         }
       }
@@ -208,6 +316,12 @@
             "state": "translated",
             "value": "Largeur"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ancho"
+          }
         }
       }
     },
@@ -218,6 +332,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Longueur"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largo"
           }
         }
       }
@@ -230,6 +350,12 @@
             "state": "translated",
             "value": "Rotation"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotación"
+          }
         }
       }
     },
@@ -240,6 +366,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Astuce : une rotation à deux doigts sur la piscine la fait pivoter aussi."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consejo: gire con dos dedos sobre la piscina para rotarla."
           }
         }
       }
@@ -252,6 +384,12 @@
             "state": "translated",
             "value": "Touchez deux fois la carte pour placer la piscine"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque dos veces el mapa para colocar la piscina"
+          }
         }
       }
     },
@@ -262,6 +400,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Terrain et bâtiments"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terreno y edificaciones"
           }
         }
       }
@@ -274,6 +418,12 @@
             "state": "translated",
             "value": "Tracer le terrain"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dibujar terreno"
+          }
         }
       }
     },
@@ -284,6 +434,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retracer le terrain"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redibujar terreno"
           }
         }
       }
@@ -296,6 +452,12 @@
             "state": "translated",
             "value": "Ajouter un bâtiment"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir edificación"
+          }
         }
       }
     },
@@ -306,6 +468,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter une zone"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir zona"
           }
         }
       }
@@ -318,6 +486,12 @@
             "state": "translated",
             "value": "Effacer le terrain"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar terreno"
+          }
         }
       }
     },
@@ -328,6 +502,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer un bâtiment (%lld)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar edificación (%lld)"
           }
         }
       }
@@ -340,6 +520,12 @@
             "state": "translated",
             "value": "Terminer (%lld)"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finalizar (%lld)"
+          }
         }
       }
     },
@@ -350,6 +536,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
           }
         }
       }
@@ -362,6 +554,12 @@
             "state": "translated",
             "value": "Touchez chaque coin du terrain, puis Terminer."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque cada esquina del terreno y luego Finalizar."
+          }
         }
       }
     },
@@ -372,6 +570,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez chaque coin du bâtiment, puis Terminer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque cada esquina de la edificación y luego Finalizar."
           }
         }
       }
@@ -384,6 +588,12 @@
             "state": "translated",
             "value": "Touchez le pourtour de la servitude/zone, puis Terminer."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque el contorno de la servidumbre/zona y luego Finalizar."
+          }
         }
       }
     },
@@ -394,6 +604,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zone %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zona %lld"
           }
         }
       }
@@ -406,6 +622,12 @@
             "state": "translated",
             "value": "Marge"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro"
+          }
         }
       }
     },
@@ -416,6 +638,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Équipement et accès sécurité"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equipos y accesos de seguridad"
           }
         }
       }
@@ -428,6 +656,12 @@
             "state": "translated",
             "value": "Ajouter un repère au centre"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir marcador en el centro"
+          }
         }
       }
     },
@@ -438,6 +672,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Équipement (mesuré)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equipos (medidos)"
           }
         }
       }
@@ -450,6 +690,12 @@
             "state": "translated",
             "value": "Sécurité (étiquettes)"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seguridad (etiquetas)"
+          }
         }
       }
     },
@@ -460,6 +706,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Faites glisser un repère sur la carte pour le déplacer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastre un marcador en el mapa para moverlo."
           }
         }
       }
@@ -472,6 +724,12 @@
             "state": "translated",
             "value": "Ensemble d'équipement"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conjunto de equipos"
+          }
         }
       }
     },
@@ -482,6 +740,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thermopompe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bomba de calor"
           }
         }
       }
@@ -494,6 +758,12 @@
             "state": "translated",
             "value": "Pompe"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bomba"
+          }
         }
       }
     },
@@ -504,6 +774,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Filtre"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtro"
           }
         }
       }
@@ -516,6 +792,12 @@
             "state": "translated",
             "value": "Échelle"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escalera"
+          }
         }
       }
     },
@@ -526,6 +808,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Portail"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portón"
           }
         }
       }
@@ -538,6 +826,12 @@
             "state": "translated",
             "value": "Portail à fermeture automatique"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portón de cierre automático"
+          }
         }
       }
     },
@@ -548,6 +842,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alarme de porte"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarma de puerta"
           }
         }
       }
@@ -560,6 +860,12 @@
             "state": "translated",
             "value": "Ouverture de clôture"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abertura de la cerca"
+          }
         }
       }
     },
@@ -570,6 +876,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mesure"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medir"
           }
         }
       }
@@ -582,6 +894,12 @@
             "state": "translated",
             "value": "Mesurer les distances"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medir distancias"
+          }
         }
       }
     },
@@ -592,6 +910,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter la mesure"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la medición"
           }
         }
       }
@@ -604,6 +928,12 @@
             "state": "translated",
             "value": "Effacer"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar"
+          }
         }
       }
     },
@@ -614,6 +944,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touchez la carte pour mesurer. Les points s'aimantent aux bords de la piscine, du terrain, des bâtiments et aux repères."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque el mapa para medir. Los puntos se ajustan a los bordes de la piscina, el terreno, las edificaciones y los marcadores."
           }
         }
       }
@@ -626,6 +962,12 @@
             "state": "translated",
             "value": "Dernier : %@  ·  Total : %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Último: %@  ·  Total: %@"
+          }
         }
       }
     },
@@ -636,6 +978,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan d'implantation"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plano del sitio"
           }
         }
       }
@@ -648,6 +996,12 @@
             "state": "translated",
             "value": "Photos"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotos"
+          }
         }
       }
     },
@@ -658,6 +1012,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fichier (PDF/image)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivo (PDF/imagen)"
           }
         }
       }
@@ -670,6 +1030,12 @@
             "state": "translated",
             "value": "Superposez un certificat de localisation ou un plan et ajustez-le à la carte."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superponga un plano o levantamiento y ajústelo al mapa."
+          }
         }
       }
     },
@@ -680,6 +1046,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Largeur au sol"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ancho en el terreno"
           }
         }
       }
@@ -692,6 +1064,12 @@
             "state": "translated",
             "value": "Opacité"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacidad"
+          }
         }
       }
     },
@@ -702,6 +1080,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fond blanc"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fondo blanco"
           }
         }
       }
@@ -714,6 +1098,12 @@
             "state": "translated",
             "value": "Centrer sur la carte"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Centrar en el mapa"
+          }
         }
       }
     },
@@ -724,6 +1114,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Supprimer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
           }
         }
       }
@@ -736,6 +1132,12 @@
             "state": "translated",
             "value": "Impossible de lire ce fichier."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer ese archivo."
+          }
         }
       }
     },
@@ -746,6 +1148,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Règlements"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Normas"
           }
         }
       }
@@ -758,6 +1166,12 @@
             "state": "translated",
             "value": "Valeurs d'exemple — à vérifier auprès de votre municipalité."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valores de ejemplo: verifíquelos con su municipio."
+          }
         }
       }
     },
@@ -768,6 +1182,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marge de recul (ligne de terrain)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro del lindero"
           }
         }
       }
@@ -780,6 +1200,12 @@
             "state": "translated",
             "value": "Marge de recul (bâtiment)"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro de edificaciones"
+          }
         }
       }
     },
@@ -790,6 +1216,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dégagement équipement–piscine"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distancia equipos–piscina"
           }
         }
       }
@@ -802,6 +1234,12 @@
             "state": "translated",
             "value": "Marge équipement–terrain"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro equipos–lindero"
+          }
         }
       }
     },
@@ -812,6 +1250,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Taux d'occupation maximal"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocupación máxima del terreno"
           }
         }
       }
@@ -824,6 +1268,12 @@
             "state": "translated",
             "value": "Scénarios"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escenarios"
+          }
         }
       }
     },
@@ -834,6 +1284,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom du scénario…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre del escenario…"
           }
         }
       }
@@ -846,6 +1302,12 @@
             "state": "translated",
             "value": "Enregistrer"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar"
+          }
         }
       }
     },
@@ -856,6 +1318,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "ovale"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ovalada"
           }
         }
       }
@@ -868,6 +1336,12 @@
             "state": "translated",
             "value": "ronde"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "redonda"
+          }
         }
       }
     },
@@ -878,6 +1352,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "rectangulaire"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rectangular"
           }
         }
       }
@@ -890,6 +1370,12 @@
             "state": "translated",
             "value": "%lld × %lld pi %@, %lld°"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld × %lld pies %@, %lld°"
+          }
         }
       }
     },
@@ -900,6 +1386,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unités et affichage"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unidades y vista"
           }
         }
       }
@@ -912,6 +1404,12 @@
             "state": "translated",
             "value": "Unités"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unidades"
+          }
         }
       }
     },
@@ -923,6 +1421,12 @@
             "state": "translated",
             "value": "pi / po"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pies / pulg"
+          }
         }
       }
     },
@@ -930,6 +1434,12 @@
       "extractionState": "manual",
       "localizations": {
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "m"
+          }
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "m"
@@ -945,6 +1455,12 @@
             "state": "translated",
             "value": "Mixte"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mixto"
+          }
         }
       }
     },
@@ -955,6 +1471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vue épurée (masquer les poignées)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista limpia (ocultar controles)"
           }
         }
       }
@@ -967,6 +1489,12 @@
             "state": "translated",
             "value": "Couche de tuiles personnalisée"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capa de teselas personalizada"
+          }
         }
       }
     },
@@ -977,6 +1505,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Remplace l'imagerie Apple lorsqu'elle est désuète (p. ex. une URL Mapbox avec clé). Laissez vide pour Plans. Les tuiles personnalisées n'apparaissent pas dans les exports."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reemplaza las imágenes de Apple cuando están desactualizadas (p. ej. una URL de Mapbox con clave). Déjelo vacío para Apple Maps. Las teselas personalizadas no aparecen en las exportaciones."
           }
         }
       }
@@ -989,6 +1523,12 @@
             "state": "translated",
             "value": "Exporter"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar"
+          }
         }
       }
     },
@@ -999,6 +1539,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exporter le plan (PDF + PNG)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar plano (PDF + PNG)"
           }
         }
       }
@@ -1011,6 +1557,12 @@
             "state": "translated",
             "value": "Capture la carte visible avec les calques, une échelle et un résumé de conformité."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captura el mapa visible con las capas, una escala y un resumen de cumplimiento."
+          }
         }
       }
     },
@@ -1021,6 +1573,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "La carte n'est pas encore prête."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mapa aún no está listo."
           }
         }
       }
@@ -1033,6 +1591,12 @@
             "state": "translated",
             "value": "Échec de l'export — réessayez."
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al exportar: inténtelo de nuevo."
+          }
         }
       }
     },
@@ -1043,6 +1607,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune piscine placée"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay piscina colocada"
           }
         }
       }
@@ -1055,6 +1625,12 @@
             "state": "translated",
             "value": "Piscine : %@ × %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscina: %@ × %@"
+          }
         }
       }
     },
@@ -1065,6 +1641,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Superficie d'eau : %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie de agua: %@"
           }
         }
       }
@@ -1077,6 +1659,12 @@
             "state": "translated",
             "value": "La piscine est hors du contour du terrain"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La piscina está fuera del contorno del terreno"
+          }
         }
       }
     },
@@ -1087,6 +1675,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ligne de terrain %lld : %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lindero %lld: %@"
           }
         }
       }
@@ -1099,6 +1693,12 @@
             "state": "translated",
             "value": "Terrain : %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terreno: %@"
+          }
         }
       }
     },
@@ -1109,6 +1709,12 @@
           "stringUnit": {
             "state": "translated",
             "value": " — la piscine occupe %.1f %%"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " — la piscina ocupa %.1f %%"
           }
         }
       }
@@ -1121,6 +1727,12 @@
             "state": "translated",
             "value": "Bâtiment le plus proche : %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edificación más cercana: %@"
+          }
         }
       }
     },
@@ -1131,6 +1743,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zone %lld : %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zona %lld: %@"
           }
         }
       }
@@ -1143,6 +1761,12 @@
             "state": "translated",
             "value": "%@ : piscine %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: piscina %@"
+          }
         }
       }
     },
@@ -1153,6 +1777,12 @@
           "stringUnit": {
             "state": "translated",
             "value": ", terrain %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", terreno %@"
           }
         }
       }
@@ -1165,6 +1795,12 @@
             "state": "translated",
             "value": "⚠ Marges non respectées"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠ Retiros no cumplidos"
+          }
         }
       }
     },
@@ -1175,6 +1811,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "✓ Toutes les vérifications actives sont conformes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Todas las verificaciones activas cumplen"
           }
         }
       }
@@ -1187,6 +1829,12 @@
             "state": "translated",
             "value": "Piscine : %@ × %@ %@ — superficie d'eau %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piscina: %@ × %@ %@ — superficie de agua %@"
+          }
         }
       }
     },
@@ -1197,6 +1845,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan d'implantation de piscine%@  ·  %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plano de emplazamiento de piscina%@  ·  %@"
           }
         }
       }
@@ -1209,6 +1863,12 @@
             "state": "translated",
             "value": "CONFORME  "
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CUMPLE  "
+          }
         }
       }
     },
@@ -1219,6 +1879,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "NON CONFORME  "
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO CUMPLE  "
           }
         }
       }
@@ -1231,6 +1897,12 @@
             "state": "translated",
             "value": "Marge (ligne de terrain) ≥ %@ — la plus proche %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro del lindero ≥ %@ — el más cercano %@"
+          }
         }
       }
     },
@@ -1241,6 +1913,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marge (bâtiment) ≥ %@ — la plus proche %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retiro de edificaciones ≥ %@ — el más cercano %@"
           }
         }
       }
@@ -1253,6 +1931,12 @@
             "state": "translated",
             "value": "Dégagement équipement–piscine ≥ %@ — le plus proche %@"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distancia equipos–piscina ≥ %@ — la más cercana %@"
+          }
         }
       }
     },
@@ -1263,6 +1947,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dégagement zone %lld%@ — le plus proche %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distancia zona %lld%@ — la más cercana %@"
           }
         }
       }
@@ -1275,6 +1965,12 @@
             "state": "translated",
             "value": "Occupation du terrain ≤ %.0f %% — la piscine occupe %.1f %%"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocupación del terreno ≤ %.0f %% — la piscina ocupa %.1f %%"
+          }
         }
       }
     },
@@ -1285,6 +1981,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Superficie du terrain %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie del terreno %@"
           }
         }
       }
@@ -1297,6 +1999,12 @@
             "state": "translated",
             "value": "Exemple — à vérifier auprès de votre municipalité"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejemplo: verifíquelo con su municipio"
+          }
         }
       }
     },
@@ -1304,6 +2012,12 @@
       "extractionState": "manual",
       "localizations": {
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%.1f m²"
+          }
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "%.1f m²"
@@ -1319,6 +2033,12 @@
             "state": "translated",
             "value": "%lld pi²"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pies²"
+          }
         }
       }
     },
@@ -1326,6 +2046,12 @@
       "extractionState": "manual",
       "localizations": {
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%.2f m"
+          }
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "%.2f m"
@@ -1341,6 +2067,12 @@
             "state": "translated",
             "value": "%lld pi"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pies"
+          }
         }
       }
     },
@@ -1352,6 +2084,12 @@
             "state": "translated",
             "value": "%lld po"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pulg"
+          }
         }
       }
     },
@@ -1362,6 +2100,182 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld pi %lld po"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pies %lld pulg"
+          }
+        }
+      }
+    },
+    "Profiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profils"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfiles"
+          }
+        }
+      }
+    },
+    "Save as…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer sous…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar como…"
+          }
+        }
+      }
+    },
+    "Profile name…": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom du profil…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre del perfil…"
+          }
+        }
+      }
+    },
+    "No saved profiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun profil enregistré"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay perfiles guardados"
+          }
+        }
+      }
+    },
+    "Delete %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar %@"
+          }
+        }
+      }
+    },
+    "Measure setbacks to": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesurer les marges depuis"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medir los retiros desde"
+          }
+        }
+      }
+    },
+    "Water's edge": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ligne d'eau"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea de agua"
+          }
+        }
+      }
+    },
+    "Pool wall": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paroi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pared"
+          }
+        }
+      }
+    },
+    "Wall / coping width": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Largeur paroi / margelle"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ancho de pared / borde"
+          }
+        }
+      }
+    },
+    "Setbacks are measured from this much outside the water line.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les marges sont mesurées à cette distance à l'extérieur de la ligne d'eau."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los retiros se miden a esta distancia por fuera de la línea de agua."
           }
         }
       }

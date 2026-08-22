@@ -24,6 +24,10 @@ public struct RuleProfile: Codable, Equatable, Sendable {
     /// Max pool footprint as % of lot area. Off by default.
     public var maxLotCoveragePct: Double?
     public var setbackReference: SetbackReference
+    /// How far the wall/coping extends beyond the water line, meters. Only
+    /// meaningful when `setbackReference` is `.poolWall`. Optional so older
+    /// saved projects still decode.
+    public var copingWidthM: Double?
 
     public init(
         name: String,
@@ -32,7 +36,8 @@ public struct RuleProfile: Codable, Equatable, Sendable {
         equipmentPoolClearanceM: Double? = 1.0,
         equipmentLotSetbackM: Double? = nil,
         maxLotCoveragePct: Double? = nil,
-        setbackReference: SetbackReference = .poolWall
+        setbackReference: SetbackReference = .poolWall,
+        copingWidthM: Double? = nil
     ) {
         self.name = name
         self.propertyLineSetbackM = propertyLineSetbackM
@@ -41,6 +46,13 @@ public struct RuleProfile: Codable, Equatable, Sendable {
         self.equipmentLotSetbackM = equipmentLotSetbackM
         self.maxLotCoveragePct = maxLotCoveragePct
         self.setbackReference = setbackReference
+        self.copingWidthM = copingWidthM
+    }
+
+    /// Extra distance added around the water polygon before measuring, so
+    /// setbacks can be taken from the wall/coping edge instead of the water.
+    public var measurementInsetM: Double {
+        setbackReference == .poolWall ? max(0, copingWidthM ?? 0) : 0
     }
 
     /// Conservative common starting point, clearly labeled as an example —

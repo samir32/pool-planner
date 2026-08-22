@@ -101,6 +101,34 @@ final class ComplianceEngineTests: XCTestCase {
         XCTAssertEqual(report.zoneViolations, [true])
     }
 
+    /// Measuring to the pool wall grows the measured ring by the coping
+    /// width, so every gap shrinks by exactly that much.
+    func testMeasurementReferenceInset() {
+        var rules = RuleProfile(name: "t")
+        XCTAssertEqual(rules.measurementInsetM, 0, accuracy: 1e-12)
+
+        rules.setbackReference = .waterEdge
+        rules.copingWidthM = 0.4
+        XCTAssertEqual(rules.measurementInsetM, 0, accuracy: 1e-12, "water's edge ignores coping")
+
+        rules.setbackReference = .poolWall
+        XCTAssertEqual(rules.measurementInsetM, 0.4, accuracy: 1e-12)
+
+        // 4×4 m pool centered in a 10×10 m lot: 3 m gap at the water line,
+        // 2.6 m once measured from a 0.4 m coping.
+        let site = makeSite()
+        let water = ComplianceEngine.evaluate(site: site, rules: RuleProfile(name: "t"))
+        XCTAssertEqual(water.lotEdgeGaps.first!.connector.d, 3.0, accuracy: 1e-9)
+
+        var walled = site
+        walled.poolRing = PoolShape.points(
+            center: site.poolCenter, aM: 2 + rules.measurementInsetM,
+            bM: 2 + rules.measurementInsetM, rotDeg: 0, shape: .rect
+        )
+        let report = ComplianceEngine.evaluate(site: walled, rules: rules)
+        XCTAssertEqual(report.lotEdgeGaps.first!.connector.d, 2.6, accuracy: 1e-9)
+    }
+
     func testEquipmentLotRuleOverridesPropertySetback() {
         let site = makeSite() // equipment sits 2.5 m from lot edge
         // property setback 3 m would flag it…

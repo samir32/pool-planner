@@ -85,6 +85,8 @@ final class PlannerModel: NSObject, ObservableObject {
     /// Optional XYZ tile template ({z}/{x}/{y}) replacing Apple imagery —
     /// the web app's escape hatch for areas with stale satellite photos.
     @Published var customTileTemplate: String?
+    /// Named rule profiles the user can reuse across projects.
+    @Published var savedProfiles: [RuleProfile] = []
 
     private var undoStack: [ProjectState] = []
     private var redoStack: [ProjectState] = []
@@ -130,7 +132,8 @@ final class PlannerModel: NSObject, ObservableObject {
             poolCenter: poolCenter, shape: shape, widthFt: widthFt, lengthFt: lengthFt,
             rotationDeg: rotationDeg, units: units, lot: lot, structures: structures,
             pins: pins, rules: rules, scenarios: scenarios, sitePlan: sitePlan,
-            zones: zones, customTileTemplate: customTileTemplate
+            zones: zones, customTileTemplate: customTileTemplate,
+            savedProfiles: savedProfiles
         )
     }
 
@@ -170,6 +173,7 @@ final class PlannerModel: NSObject, ObservableObject {
         sitePlan = state.sitePlan
         zones = state.zones ?? []
         customTileTemplate = state.customTileTemplate
+        savedProfiles = state.savedProfiles ?? []
         if state.sitePlan != nil, sitePlanImage == nil, let data = store.loadSitePlanImage() {
             sitePlanImage = UIImage(data: data)
         }
@@ -314,6 +318,20 @@ final class PlannerModel: NSObject, ObservableObject {
         return PoolShape.points(center: c, aM: ax.aM, bM: ax.bM, rotDeg: rotationDeg, shape: shape)
     }
 
+    /// Ring the compliance engine measures from: the water ring grown by the
+    /// rule profile's measurement inset, so setbacks can be taken from the
+    /// wall/coping edge. Equal to `poolRing` when the inset is zero.
+    var measurementRing: [LatLng]? {
+        guard let c = poolCenter else { return nil }
+        let inset = rules.measurementInsetM
+        guard inset > 0 else { return poolRing }
+        let ax = semiAxes
+        return PoolShape.points(
+            center: c, aM: ax.aM + inset, bM: ax.bM + inset,
+            rotDeg: rotationDeg, shape: shape
+        )
+    }
+
     var footprintM2: Double {
         let ax = semiAxes
         return PoolShape.footprintM2(aM: ax.aM, bM: ax.bM, shape: shape)
@@ -326,7 +344,7 @@ final class PlannerModel: NSObject, ObservableObject {
     // MARK: - Compliance
 
     var report: ComplianceReport? {
-        guard let center = poolCenter, let ring = poolRing else { return nil }
+        guard let center = poolCenter, let ring = measurementRing else { return nil }
         let site = SiteGeometry(
             poolCenter: center,
             poolRing: ring,
@@ -461,6 +479,34 @@ final class PlannerModel: NSObject, ObservableObject {
         for i in 1..<measurePoints.count { total += d(measurePoints[i - 1], measurePoints[i]) }
         let last = d(measurePoints[measurePoints.count - 2], measurePoints[measurePoints.count - 1])
         return (last, total)
+    }
+
+    // MARK: - Rule profiles
+
+    /// Save the active rules under a name, replacing any profile with that
+    /// name (the same convention scenarios use).
+    func saveRuleProfile(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        recordUndo()
+        var profile = rules
+        profile.name = trimmed
+        rules.name = trimmed
+        if let i = savedProfiles.firstIndex(where: { $0.name == trimmed }) {
+            savedProfiles[i] = profile
+        } else {
+            savedProfiles.append(profile)
+        }
+    }
+
+    func loadRuleProfile(_ profile: RuleProfile) {
+        recordUndo()
+        rules = profile
+    }
+
+    func removeRuleProfile(named name: String) {
+        recordUndo()
+        savedProfiles.removeAll { $0.name == name }
     }
 
     // MARK: - Scenarios
