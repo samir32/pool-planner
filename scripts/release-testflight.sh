@@ -58,9 +58,29 @@ fi
 echo "==> Version being uploaded"
 grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" ios/project.yml
 
-echo "==> Running tests before shipping"
+# Pick whatever iPad simulator this Mac actually has. Hardcoding a name
+# resolves to OS:latest, which fails whenever that model only exists on an
+# older runtime.
+SIM_UDID="$(xcrun simctl list devices available --json | python3 -c '
+import json, sys
+runtimes = json.load(sys.stdin)["devices"]
+best = None
+for runtime, devices in runtimes.items():
+    if "iOS" not in runtime:
+        continue
+    for dev in devices:
+        if dev.get("isAvailable") and "iPad" in dev["name"]:
+            if best is None or runtime > best[0]:
+                best = (runtime, dev["udid"], dev["name"])
+print(best[1] if best else "")
+')"
+if [ -z "$SIM_UDID" ]; then
+  echo "error: no available iPad simulator to run tests on" >&2; exit 1
+fi
+
+echo "==> Running tests before shipping (simulator $SIM_UDID)"
 xcodebuild test -project ios/PoolPlanner.xcodeproj -scheme PoolPlanner \
-  -destination "platform=iOS Simulator,name=iPad Pro 11-inch (M4)" \
+  -destination "platform=iOS Simulator,arch=arm64,id=$SIM_UDID" \
   -quiet
 
 ARCHIVE_PATH="$(mktemp -d)/PoolPlanner.xcarchive"
